@@ -123,11 +123,11 @@ void loop() {
 //  Serial.println();
 //  Serial.println(String(prev_left_count) + " " + String(left_count));
 
-  long deltaRight = right_count - prev_right_count;
-  long deltaLeft = left_count - prev_left_count;
-  theta_world += delta_theta(deltaRight, deltaLeft);
-  x_world += cos(theta_world) * delta_x_robot(deltaRight, deltaLeft); // some error since theta is not constant
-  y_world += sin(theta_world) * delta_x_robot(deltaRight, deltaLeft);
+//  long deltaRight = right_count - prev_right_count;
+//  long deltaLeft = left_count - prev_left_count;
+//  theta_world += delta_theta(deltaRight, deltaLeft);
+//  x_world += cos(theta_world) * delta_x_robot(deltaRight, deltaLeft); // some error since theta is not constant
+//  y_world += sin(theta_world) * delta_x_robot(deltaRight, deltaLeft);
 
 //  Serial.println(String(prev_left_count) + " " + String(left_count));
   delay(250);
