@@ -3,6 +3,7 @@
 
 QTRSensors qtr;
 
+const int8_t lookup_table[] = {0,0,0,-1,0,0,1,0,0,1,0,0,-1,0,0,0};
 const long WHEEL_BASE = 12000; // width between wheels (in μm? smaller units are useful to avoid floats)
 const long WHEEL_RADIUS = 3500; // should be same unit as WHEEL_BASE
 //const long CHASSIS_LENGTH = 24000; // length from center of wheel axis to front point we are controlling 
@@ -74,29 +75,27 @@ uint8_t black_or_white(int sensorValue) {
 
 // right wheel uses pins 3 and 4
 void right_wheel_isr() {
-    static int8_t lookup_table[] = {0,0,0,-1,0,0,1,0,0,1,0,0,-1,0,0,0};
-    static uint8_t enc_val = 0;
+    static uint8_t right_enc_val = 0;
     
-    enc_val = enc_val << 2;
+    right_enc_val = right_enc_val << 2;
 
     uint8_t pin4 = black_or_white(sensorValues[2]);
     uint8_t pin3 = black_or_white(sensorValues[1]);
-    enc_val = enc_val | ((pin4 << 1) | pin3); // puts current values fo pins 5 and 2 into enc_val
-    right_count = right_count + lookup_table[enc_val & 0b1111];
+    right_enc_val = right_enc_val | ((pin4 << 1) | pin3); // puts current values fo pins 5 and 2 into enc_val
+    right_count = right_count + lookup_table[right_enc_val & 0b1111];
 }
 
 // left wheel uses pins 2 and 5
 void left_wheel_isr() {
-    static int8_t lookup_table[] = {0,0,0,-1,0,0,1,0,0,1,0,0,-1,0,0,0};
-    static uint8_t enc_val = 0;
+    static uint8_t left_enc_val = 0;
     
-    enc_val = enc_val << 2;
+    left_enc_val = left_enc_val << 2;
 
     uint8_t pin5 = black_or_white(sensorValues[3]);
     uint8_t pin2 = black_or_white(sensorValues[0]);
    
-    enc_val = enc_val | ((pin5 << 1) | pin2); // puts current values fo pins 5 and 2 into enc_val
-    left_count = left_count + lookup_table[enc_val & 0b1111];
+    left_enc_val = left_enc_val | ((pin5 << 1) | pin2); // puts current values fo pins 5 and 2 into enc_val
+    left_count = left_count + lookup_table[left_enc_val & 0b1111];
 }
 
 
