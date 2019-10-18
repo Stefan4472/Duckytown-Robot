@@ -52,7 +52,7 @@ void right_wheel_isr() {
     uint8_t pin4 = black_or_white(sensorValues[2]);
     uint8_t pin3 = black_or_white(sensorValues[1]);
     right_enc_val = right_enc_val | ((pin4 << 1) | pin3); // puts current values fo pins 5 and 2 into enc_val
-    right_count = right_count + lookup_table[enc_val & 0b1111];
+    right_count = right_count + lookup_table[right_enc_val & 0b1111];
 }
 
 // left wheel uses pins 2 and 5
@@ -64,7 +64,7 @@ void left_wheel_isr() {
     uint8_t pin5 = black_or_white(sensorValues[3]);
     uint8_t pin2 = black_or_white(sensorValues[0]);
     left_enc_val = left_enc_val | ((pin5 << 1) | pin2); // puts current values fo pins 5 and 2 into enc_val
-    left_count = left_count + lookup_table[enc_val & 0b1111];
+    left_count = left_count + lookup_table[left_enc_val & 0b1111];
 }
 
 
