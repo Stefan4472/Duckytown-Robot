@@ -7,6 +7,17 @@ struct PiToArduinoPacket
   uint8_t seqNum;
 };
 
+enum class PiToArduinoCmd
+{
+  ECHO = 1
+};
+
+enum class ArduinoToPiRsp
+{
+  ECHO = 1,
+  ERROR = 2
+};
+
 struct ArduinoToPiPacket 
 {
   uint8_t commandID;
@@ -28,9 +39,6 @@ namespace SerialUtil
       next_byte = Serial.read();
       read_int = (read_int << 8) | next_byte;
     }
-//    Serial.print("Read int ");
-//    Serial.print(read_int);
-//    Serial.println();
     return read_int;
   }
 
@@ -94,14 +102,22 @@ namespace SerialUtil
   }
 }
 
-// TODO: ECHO PACKET, ERROR PACKET, CURR_STATE PACKET
+// TODO: ECHO PACKET, ERROR PACKET (INCLUDING ERROR CODE), CURR_STATE PACKET
 bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
 {
-  response->commandID = request->commandID;
-  response->arg1 = request->arg1;
-  response->arg2 = request->arg2;
-  response->arg3 = request->arg3;
-  response->seqNum = request->seqNum;
+  switch (static_cast<int>(request->commandID))
+  {
+    case static_cast<int>(PiToArduinoCmd::ECHO):
+      response->commandID = static_cast<int>(ArduinoToPiRsp::ECHO);
+      response->arg1 = request->arg1;
+      response->arg2 = request->arg2;
+      response->arg3 = request->arg3;
+      response->seqNum = request->seqNum;
+      break;
+    default: // TODO: ERROR RESPONSE
+      break;
+  }
+  
   return true;
 }
 
@@ -113,42 +129,30 @@ void setup()
 
 void loop() 
 {
-//  if (Serial.available() >= 14)
-//  {
-//    while (Serial.available())
-//    {
-//      Serial.write(Serial.read());
-//    }
-////    Serial.println();
-//    Serial.write('\n');
-//  }
-  
-
-//  // Check if a packet has buffered  
+  // Check if a packet has buffered  
   while (Serial.available() >= 14) 
   {
-    Serial.print("Parsing serial data ");
-    Serial.print(Serial.available());
-    Serial.println(" bytes");
     PiToArduinoPacket recv_packet;
     bool got_packet = SerialUtil::readPacket(&recv_packet);
 
     if (got_packet) 
     {
-      SerialUtil::printPacket(&recv_packet);
       // Create response
       ArduinoToPiPacket send_packet;
       if (handleRequest(&recv_packet, &send_packet))
-        {
-          SerialUtil::printPacket(&send_packet);
+      {
           SerialUtil::writePacket(&send_packet);
-          Serial.write('\r');
-          Serial.write('\n');
-        }
+//          Serial.write('\n'); 
+      }
+      else 
+      {
+        // TODO: ERROR PACKET?
+      }
     }
     else 
     {
-      Serial.println("Couldn't read packet");
+      ArduinoToPiPacket err_packet; // COULDN'T READ (DIFFERENT FROM VALUE ERROR)
+//      Serial.println("Couldn't read packet");
     }
   }
 }
