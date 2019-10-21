@@ -1,4 +1,5 @@
 import serial
+import time
 
 # TODO: PREAMBLES?
 class PiToArduinoPacket:
@@ -31,7 +32,8 @@ class ArduinoToPiPacket:  # TODO: WHAT KIND OF ENDIANNESS?
     CMD_2 = 2
     CMD_3 = 3
 
-    def parse_ufloat16(byte_array_4):
+    def parse_ufloat16(byte_array_4):  # TODO: SHOULD THIS BE LITTLE ENDIAN?
+        print('Parsing {}'.format(byte_array_4))
         return int.from_bytes(bytes(byte_array_4), 'big') / 1000.0
 
     def parse_uint16(byte_array_4):
@@ -39,6 +41,9 @@ class ArduinoToPiPacket:  # TODO: WHAT KIND OF ENDIANNESS?
 
     # Parse bytestring
     def __init__(self, byte_array):
+        print(byte_array)
+        print(byte_array[0])
+        print(byte_array[1:5])
         self.commandID = byte_array[0]
         self.arg1 = ArduinoToPiPacket.parse_ufloat16(byte_array[1:5])
         self.arg2 = ArduinoToPiPacket.parse_ufloat16(byte_array[5:9])
@@ -52,28 +57,29 @@ class ArduinoToPiPacket:  # TODO: WHAT KIND OF ENDIANNESS?
 
 
 # Sequence number
-seq_num = 0
+seq_num = 1
 
 packet1 = PiToArduinoPacket(PiToArduinoPacket.CMD_1, seq_num, 1, 2, 3)
 p1_str = packet1.to_byte_string()
 print(p1_str)
-packet2 = ArduinoToPiPacket(bytes(p1_str))
-print(packet2)
 
-# ser = serial.Serial('COM5', 9600)
-# ser.flushInput()
-#
-# # byte = b'\x01'
-# counter = 0
-#
-# while (1):  # TODO: MAKE SERIAL READS ASYNC AND CALL A HANDLER
-#     # print ('Writing to port')
-#     counter = (counter + 1) % 10
-#     ser.write(bytes([counter]))
-#
-#     if ser.in_waiting:
-#         # print ('{} bytes waiting'.format(ser.in_waiting));
-#         # print (ord(ser.read()))
-#         # print (char(ord(ser.read())))
-#         print (ser.readline())
-#     # if ser.out_waiting:
+
+ser = serial.Serial('COM5', 9600, timeout=3)
+ser.flushInput()
+# Sleep while serial port initializes
+time.sleep(2)
+bytes_written = ser.write(bytes(p1_str))
+print('Wrote {} bytes'.format(bytes_written))
+print('Wrote the packet {}'.format(p1_str))
+while (1):  # TODO: MAKE SERIAL READS ASYNC AND CALL A HANDLER
+    if ser.in_waiting:
+        print()
+        # print('{} bytes waiting'.format(ser.in_waiting))
+        # print(ser.readline())
+        # print(ser.read(size=14))
+
+        line = ser.readline()
+        print ('Read {}'.format(line))
+        read_packet = ArduinoToPiPacket(bytes(line))
+        print(read_packet)
+        print()
