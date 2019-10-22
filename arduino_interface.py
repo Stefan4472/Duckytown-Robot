@@ -1,10 +1,13 @@
 import serial
-import time
 
 # TODO: PREAMBLES?
 class PiToArduinoPacket:
     # Command IDs
     CMD_ECHO = 1
+    CMD_SET_SPEEDLIMIT = 2
+    CMD_SET_MOTORS = 3
+    CMD_SET_OPENLOOP_TARGET = 4
+    CMD_GET_ODOMETRY = 5
 
     def __init__(self, commandID, seq_num, arg1, arg2=0, arg3=0):
         self.commandID = commandID
@@ -25,7 +28,7 @@ class PiToArduinoPacket:
 
 
 class ArduinoToPiPacket:
-    # Command IDs
+    # Command IDs  TODO: USE ENUMS
     CMD_1 = 1
     CMD_2 = 2
     CMD_3 = 3
@@ -49,28 +52,23 @@ class ArduinoToPiPacket:
             self.arg2, self.arg3, self.seq_num)
 
 
+class ArduinoInterface:
+    def __init__(self, port, baudrate, timeout=None):
+        self.serial_port = serial.Serial(port, baudrate, timeout=timeout)
+        self.serial_port.flushInput()
+        self.seq_num = -1
+        self.serial_ready = False  # TODO: WAIT FOR IT TO BE READY. ASYNC?
 
-# Sequence number
-seq_num = -1
-
-# Open the serial port
-ser = serial.Serial('COM5', 9600, timeout=3)
-# Sleep while serial port initializes
-time.sleep(2)
-ser.flushInput()
-
-# Write three packets
-for i in range(3):
-    seq_num += 1
-    send_packet = PiToArduinoPacket(PiToArduinoPacket.CMD_ECHO, seq_num, i + 1, i + 2, i + 3).to_byte_string()
-    bytes_written = ser.write(bytes(send_packet))
-    print('Wrote {} bytes'.format(bytes_written))
-    print('Wrote the packet {}'.format(send_packet))
-
-while (1):  # TODO: MAKE SERIAL READS ASYNC AND CALL A HANDLER
-    if ser.in_waiting:
-        print()
+    def echo(arg1, arg2, arg3):
+        self.seq_num += 1
+        # Construct the packet
+        send_packet = PiToArduinoPacket(PiToArduinoPacket.CMD_ECHO, \
+            self.seq_num, arg1, arg2, arg3)
+        # Write the packet
+        bytes_written = this.serial_port.write(bytes(send_packet.to_byte_string()))
+        # Read the response
         raw_packet = ser.read(size=14)
-        print ('Read {}'.format(raw_packet))
-        read_packet = ArduinoToPiPacket(bytes(raw_packet))
-        print(read_packet)
+        # Parse response
+        parsed_packet = ArduinoToPiPacket(bytes(raw_packet))
+        # Return values
+        return (parsed_packet.arg1, parsed_packet.arg2, parsed_packet.arg3)
