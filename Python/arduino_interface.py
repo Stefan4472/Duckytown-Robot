@@ -9,7 +9,7 @@ class PiToArduinoPacket:
     CMD_SET_OPENLOOP_TARGET = 4
     CMD_GET_ODOMETRY = 5
 
-    def __init__(self, commandID, seq_num, arg1, arg2=0, arg3=0):
+    def __init__(self, commandID, seq_num, arg1=0, arg2=0, arg3=0):
         self.commandID = commandID
         self.arg1 = arg1
         self.arg2 = arg2
@@ -72,3 +72,17 @@ class ArduinoInterface:
         parsed_packet = ArduinoToPiPacket(bytes(raw_packet))
         # Return values
         return (parsed_packet.arg1, parsed_packet.arg2, parsed_packet.arg3)
+
+    def set_motor_pwm(self, left, right):
+        self.seq_num += 1
+        # Construct the packet
+        send_packet = PiToArduinoPacket(PiToArduinoPacket.CMD_SET_MOTORS, \
+            self.seq_num, left, right)
+        # Write the packet
+        bytes_written = this.serial_port.write(bytes(send_packet.to_byte_string()))
+        # Read the response
+        # raw_packet = ser.read(size=14)
+        # Parse response
+        # parsed_packet = ArduinoToPiPacket(bytes(raw_packet))
+        # Return values
+        # return (parsed_packet.arg1, parsed_packet.arg2, parsed_packet.arg3)
