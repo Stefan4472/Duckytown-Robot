@@ -1,19 +1,19 @@
 #include <math.h>
-#include "DualMC33926MotorShield.h"  // TODO: MOTOR INTERFACE CLASS
 #include "packet_defs.h"
 #include "serial_interface.h"
 #include "odometry_interface.h"
+#include "wheel_interface.h"
+
+WheelInterface wheelInterface;
 
 //OdometryInterface odometryInterface;
-// MotorShield interface.
-DualMC33926MotorShield motorInterface;
 
 void setup() 
 {
   Serial.begin(9600);  // TODO: RUN AT A HIGHER BAUD RATE
   Serial.flush();
-  motorInterface.init();
   OdometryInterface::init();
+  wheelInterface.init();
 }
 
 void loop() // TODO: A PROPER SERIALINTERFACE CLASS
@@ -65,8 +65,12 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
       
     // SET_MOTORS command
     case static_cast<int>(PiToArduinoCmd::SET_MOTORS):
-      motorInterface.setM1Speed((int) request->arg1);
-      motorInterface.setM2Speed((int) request->arg2);
+      Serial.println("Commanding PWMs");
+      Serial.print((int) request->arg1);
+      Serial.print('/');
+      Serial.print((int) request->arg2);
+      Serial.println();
+      wheelInterface.commandPWMs((int) request->arg1, (int) request->arg2);
       return false;
 
     // GET_ODOMETRY command 
