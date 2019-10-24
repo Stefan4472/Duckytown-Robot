@@ -6,6 +6,8 @@
 
 namespace SerialUtil 
 { 
+  int32_t readInt32();
+  void writeInt32(int32_t to_write);
   uint32_t readUint32();
   void writeUint32(uint32_t to_write);
     // TODO: ERROR CHECKING?

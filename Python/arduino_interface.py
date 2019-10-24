@@ -21,9 +21,9 @@ class PiToArduinoPacket:
     def to_byte_string(self):
         args = []
         args.append(int(self.commandID).to_bytes(1, 'big'))
-        args.append(int(1000 * self.arg1).to_bytes(4, 'big'))
-        args.append(int(1000 * self.arg2).to_bytes(4, 'big'))
-        args.append(int(1000 * self.arg3).to_bytes(4, 'big'))
+        args.append(int(1000 * self.arg1).to_bytes(4, 'big', signed=True))
+        args.append(int(1000 * self.arg2).to_bytes(4, 'big', signed=True))
+        args.append(int(1000 * self.arg3).to_bytes(4, 'big', signed=True))
         args.append(int(self.seq_num).to_bytes(1, 'big'))
         return b''.join(args)
 
@@ -35,6 +35,10 @@ class ArduinoToPiPacket:
     CMD_3 = 3
     CMD_GET_TICKS = 6
 
+    def parse_float16(byte_array_4):
+        print(int.from_bytes(bytes(byte_array_4), 'big', signed=True))
+        return int.from_bytes(bytes(byte_array_4), 'big', signed=True) / 1000.0
+
     def parse_ufloat16(byte_array_4):
         return int.from_bytes(bytes(byte_array_4), 'big') / 1000.0
 
@@ -44,9 +48,9 @@ class ArduinoToPiPacket:
     # Parse bytestring
     def __init__(self, byte_array):
         self.commandID = byte_array[0]
-        self.arg1 = ArduinoToPiPacket.parse_ufloat16(byte_array[1:5])
-        self.arg2 = ArduinoToPiPacket.parse_ufloat16(byte_array[5:9])
-        self.arg3 = ArduinoToPiPacket.parse_ufloat16(byte_array[9:13])
+        self.arg1 = ArduinoToPiPacket.parse_float16(byte_array[1:5])
+        self.arg2 = ArduinoToPiPacket.parse_float16(byte_array[5:9])
+        self.arg3 = ArduinoToPiPacket.parse_float16(byte_array[9:13])
         self.seq_num = byte_array[13]
 
     def __str__(self):
@@ -61,7 +65,7 @@ class ArduinoInterface:
         self.seq_num = -1
         self.serial_ready = False  # TODO: WAIT FOR IT TO BE READY. ASYNC?
 
-    def echo(arg1, arg2, arg3):
+    def echo(self, arg1, arg2, arg3):
         self.seq_num += 1
         # Construct the packet
         send_packet = PiToArduinoPacket(PiToArduinoPacket.CMD_ECHO, \

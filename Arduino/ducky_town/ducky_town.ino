@@ -52,7 +52,8 @@ void loop() // TODO: A PROPER SERIALINTERFACE CLASS
       ArduinoToPiPacket send_packet;
       if (handleRequest(&recv_packet, &send_packet))
       {
-          SerialUtil::writePacket(&send_packet);
+        SerialUtil::printPacket(&send_packet);
+        SerialUtil::writePacket(&send_packet);
       }
     }
     // Couldn't read a valid packet off the serial buffer.
@@ -75,25 +76,7 @@ void loop() // TODO: A PROPER SERIALINTERFACE CLASS
   y_world += sin(theta_world) * delta_x_robot(deltaRight, deltaLeft);
   prev_left_count = left_count;
   prev_right_count = right_count;
-  interrupts();
-  
-  Serial.print(left_count);
-  Serial.print('/');
-  Serial.print(right_count);
-  /*
-  Serial.print('/');
-  Serial.print(prev_left_count);
-  Serial.print('/');
-  Serial.print(prev_right_count);
-  */
-  Serial.println();
-  
-//  prev_right_count = right_count;
-//  Serial.print(left_count);
-//  Serial.println();
-//  Serial.println(String(prev_left_count) + " " + String(left_count));
-  delay(250);
-  
+  interrupts(); 
 }
 
 // TODO: ECHO PACKET, ERROR PACKET (INCLUDING ERROR CODE), MOTOR_ERROR, CURR_STATE PACKET
