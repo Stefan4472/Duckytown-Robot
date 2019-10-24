@@ -7,7 +7,7 @@ class PiToArduinoPacket:
     CMD_SET_SPEEDLIMIT = 2
     CMD_SET_MOTORS = 3
     CMD_SET_OPENLOOP_TARGET = 4
-    CMD_GET_ODOMETRY = 5,
+    CMD_GET_ODOMETRY = 5
     CMD_GET_TICKS = 6
 
     def __init__(self, commandID, seq_num, arg1=0, arg2=0, arg3=0):
@@ -36,7 +36,6 @@ class ArduinoToPiPacket:
     CMD_GET_TICKS = 6
 
     def parse_float16(byte_array_4):
-        print(int.from_bytes(bytes(byte_array_4), 'big', signed=True))
         return int.from_bytes(bytes(byte_array_4), 'big', signed=True) / 1000.0
 
     def parse_ufloat16(byte_array_4):
