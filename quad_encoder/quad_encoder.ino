@@ -34,7 +34,7 @@ void setup() {
   // 2.5 ms RC read timeout (default) * 10 reads per calibrate() call
   // = ~25 ms per calibrate() call.
   // Call calibrate() 400 times to make calibration take about 10 seconds.
-  for (uint16_t i = 0; i < 400; i++)
+  for (uint16_t i = 0; i < 200; i++)
   {
     qtr.calibrate();
   }
@@ -66,7 +66,7 @@ void setup() {
 
 // takes reading from qtr sensor, returns 1 if reading black, 0 if white
 uint8_t black_or_white(int sensorValue) {
-  if (sensorValue < 2300) {
+  if (sensorValue < 500) {
     return 0b0;
   } else {
     return 0b1;
@@ -90,6 +90,11 @@ void left_wheel_isr() {
     static uint8_t left_enc_val = 0;
     
     left_enc_val = left_enc_val << 2;
+//      for (uint8_t i = 0; i < SensorCount; i++) {
+//        Serial.print(sensorValues[i]);
+//        Serial.print('\t');
+//      }
+//      Serial.println();
 
     uint8_t pin5 = black_or_white(sensorValues[3]);
     uint8_t pin2 = black_or_white(sensorValues[0]);
@@ -113,6 +118,7 @@ void loop() {
   prev_left_count = left_count;
   prev_right_count = right_count;
   qtr.readLineBlack(sensorValues);
+
   for (uint8_t i = 0; i < SensorCount; i++) {
     Serial.print(sensorValues[i]);
     Serial.print('\t');
