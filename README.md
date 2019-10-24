@@ -21,3 +21,7 @@ Deactivate the environment:
 ```
 deactivate
 ```
+
+# Setting up the Arduino
+Required libraries:
+1. DualMC33926MotorShield
