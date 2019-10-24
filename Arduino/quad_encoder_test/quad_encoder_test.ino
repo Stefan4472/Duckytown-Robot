@@ -1,7 +1,8 @@
-#include <QTRSensors.h>
 #include <math.h> 
+#include "DualMC33926MotorShield.h"
 
-QTRSensors qtr;
+// MotorShield interface.
+DualMC33926MotorShield motorInterface;
 
 const int8_t TICKS_PER_ROTATION = 8; 
 const int8_t lookup_table[] = {0,0,0,-1,0,0,1,0,0,1,0,0,-1,0,0,0};
@@ -23,13 +24,12 @@ long prev_right_count = 0;
 
 
 void setup() {
+  motorInterface.init();
+  motorInterface.setM1Speed(0);
+  motorInterface.setM2Speed(0);
+  
   pinMode(2, INPUT);
   pinMode(3, INPUT);
-  
-  // configure the sensors
-  qtr.setTypeRC();
-  qtr.setSensorPins((const uint8_t[]){2,3,4,5}, SensorCount);
-  qtr.setEmitterPin(6);
   
   Serial.begin(9600);
  
@@ -39,21 +39,25 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(3),right_wheel_isr,CHANGE);
 }
 
-// right wheel uses pins 3 and 4
+volatile uint8_t right_enc_val = 0;
+
+// right wheel uses pins 3 and 11
 void right_wheel_isr() {
-    static uint8_t right_enc_val = 0;
+    //static uint8_t right_enc_val = 0;
     right_enc_val = right_enc_val << 2;
     
-    uint8_t pin4 = (PIND & 0b10000) >> 4;
+    uint8_t pin11 = (PINB & 0b1000) >> 3;
     uint8_t pin3 = (PIND & 0b1000) >> 2;
     
-    right_enc_val = right_enc_val | (pin3 | pin4); // puts current values fo pins 5 and 2 into enc_val
+    right_enc_val = right_enc_val | (pin3 | pin11); // puts current values for pins 3 and 11 into enc_val
     right_count = right_count + lookup_table[right_enc_val & 0b1111];
+    
 }
 
+volatile uint8_t left_enc_val = 0; 
 // left wheel uses pins 2 and 5
 void left_wheel_isr() {
-    static uint8_t left_enc_val = 0;
+    //static uint8_t left_enc_val = 0;
     left_enc_val = left_enc_val << 2;
 
     uint8_t pin5 = (PIND & 0b100000) >> 5;
@@ -90,9 +94,19 @@ void loop() {
   Serial.print('/');
   Serial.print(right_count);
   Serial.println();
+  /*Serial.print('/');
+  Serial.print(left_enc_val);
+  Serial.print('/');
+  Serial.print(lookup_table[left_enc_val & 0b1111]);
+  Serial.print('/');
+  Serial.print(right_enc_val);
+  Serial.print('/');
+  Serial.print(lookup_table[right_enc_val & 0b1111]);
+  Serial.println();
 //  prev_right_count = right_count;
 //  Serial.print(left_count);
 //  Serial.println();
 //  Serial.println(String(prev_left_count) + " " + String(left_count));
+*/
   delay(250);
 }

@@ -76,17 +76,23 @@ void loop() // TODO: A PROPER SERIALINTERFACE CLASS
   prev_left_count = left_count;
   prev_right_count = right_count;
   interrupts();
-
   
-//  Serial.print(left_count);
-//  Serial.print('/');
-//  Serial.print(right_count);
-//  Serial.println();
+  Serial.print(left_count);
+  Serial.print('/');
+  Serial.print(right_count);
+  /*
+  Serial.print('/');
+  Serial.print(prev_left_count);
+  Serial.print('/');
+  Serial.print(prev_right_count);
+  */
+  Serial.println();
+  
 //  prev_right_count = right_count;
 //  Serial.print(left_count);
 //  Serial.println();
 //  Serial.println(String(prev_left_count) + " " + String(left_count));
-//  delay(250);
+  delay(250);
   
 }
 
@@ -110,7 +116,24 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
       motorInterface.setM1Speed((int) request->arg1);
       motorInterface.setM2Speed((int) request->arg2);
       return false;
-      
+
+    // GET_ODOMETRY command 
+    case static_cast<int>(PiToArduinoCmd::GET_ODOMETRY):
+      response->commandID = static_cast<int>(ArduinoToPiRsp::ODOMETRY);
+      response->arg1 = x_world;
+      response->arg2 = y_world;
+      response->arg3 = theta_world;
+      response->seqNum = request->seqNum;
+      return true;
+
+    // GET_TICKS command 
+    case static_cast<int>(PiToArduinoCmd::GET_TICKS):
+      response->commandID = static_cast<int>(ArduinoToPiRsp::TICKS);
+      response->arg1 = (float) left_count;
+      response->arg2 = (float) right_count;
+      response->seqNum = request->seqNum;
+      return true;
+
     // Unrecognized/unsupported commandID
     default: 
       response->commandID = static_cast<int>(ArduinoToPiRsp::UNRECOGNIZED_COMMAND);
@@ -119,16 +142,17 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
   }
 }
 
-// right wheel uses pins 3 and 4
+// right wheel uses pins 3 and 11
 void right_wheel_isr() {
     static uint8_t right_enc_val = 0;
     right_enc_val = right_enc_val << 2;
     
-    uint8_t pin4 = (PIND & 0b10000) >> 4;
+    uint8_t pin11 = (PINB & 0b1000) >> 3;
     uint8_t pin3 = (PIND & 0b1000) >> 2;
     
-    right_enc_val = right_enc_val | (pin3 | pin4); // puts current values fo pins 5 and 2 into enc_val
+    right_enc_val = right_enc_val | (pin3 | pin11); // puts current values for pins 3 and 11 into enc_val
     right_count = right_count + lookup_table[right_enc_val & 0b1111];
+    
 }
 
 // left wheel uses pins 2 and 5

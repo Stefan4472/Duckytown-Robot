@@ -14,6 +14,8 @@ enum class PiToArduinoCmd
 {
   ECHO = 1,
   SET_MOTORS = 3,
+  GET_ODOMETRY = 5,
+  GET_TICKS = 6
 };
 
 enum class ArduinoToPiRsp
@@ -21,7 +23,9 @@ enum class ArduinoToPiRsp
   ECHO = 1,
   UNRECOGNIZED_COMMAND = 2,
   INVALID_SYNTAX = 3,
-  ILLEGIBLE_PACKET = 4
+  ILLEGIBLE_PACKET = 4,
+  ODOMETRY = 5,
+  TICKS = 6
   //MOTOR_ERROR = 3
 };
 

@@ -7,7 +7,8 @@ class PiToArduinoPacket:
     CMD_SET_SPEEDLIMIT = 2
     CMD_SET_MOTORS = 3
     CMD_SET_OPENLOOP_TARGET = 4
-    CMD_GET_ODOMETRY = 5
+    CMD_GET_ODOMETRY = 5,
+    CMD_GET_TICKS = 6
 
     def __init__(self, commandID, seq_num, arg1=0, arg2=0, arg3=0):
         self.commandID = commandID
@@ -32,6 +33,7 @@ class ArduinoToPiPacket:
     CMD_1 = 1
     CMD_2 = 2
     CMD_3 = 3
+    CMD_GET_TICKS = 6
 
     def parse_ufloat16(byte_array_4):
         return int.from_bytes(bytes(byte_array_4), 'big') / 1000.0
@@ -65,9 +67,9 @@ class ArduinoInterface:
         send_packet = PiToArduinoPacket(PiToArduinoPacket.CMD_ECHO, \
             self.seq_num, arg1, arg2, arg3)
         # Write the packet
-        bytes_written = this.serial_port.write(bytes(send_packet.to_byte_string()))
+        bytes_written = self.serial_port.write(bytes(send_packet.to_byte_string()))
         # Read the response
-        raw_packet = ser.read(size=14)
+        raw_packet = self.serial_port.read(size=14)
         # Parse response
         parsed_packet = ArduinoToPiPacket(bytes(raw_packet))
         # Return values
@@ -79,10 +81,23 @@ class ArduinoInterface:
         send_packet = PiToArduinoPacket(PiToArduinoPacket.CMD_SET_MOTORS, \
             self.seq_num, left, right)
         # Write the packet
-        bytes_written = this.serial_port.write(bytes(send_packet.to_byte_string()))
-        # Read the response
-        # raw_packet = ser.read(size=14)
-        # Parse response
-        # parsed_packet = ArduinoToPiPacket(bytes(raw_packet))
-        # Return values
-        # return (parsed_packet.arg1, parsed_packet.arg2, parsed_packet.arg3)
+        bytes_written = self.serial_port.write(bytes(send_packet.to_byte_string()))
+        
+    def get_odometry(self):
+        self.seq_num += 1
+        send_packet = PiToArduinoPacket(PiToArduinoPacket.CMD_GET_ODOMETRY, \
+            self.seq_num)
+        bytes_written = self.serial_port.write(bytes(send_packet.to_byte_string()))
+        raw_packet = self.serial_port.read(size=14)
+        parsed_packet = ArduinoToPiPacket(bytes(raw_packet))
+        return (parsed_packet.arg1, parsed_packet.arg2, parsed_packet.arg3)
+
+    def get_ticks(self):
+        self.seq_num += 1
+        send_packet = PiToArduinoPacket(PiToArduinoPacket.CMD_GET_TICKS, \
+            self.seq_num)
+        bytes_written = self.serial_port.write(bytes(send_packet.to_byte_string()))
+        raw_packet = self.serial_port.read(size=14)
+        print('Raw packet {}'.format(raw_packet))
+        parsed_packet = ArduinoToPiPacket(bytes(raw_packet))
+        return (parsed_packet.arg1, parsed_packet.arg2)
