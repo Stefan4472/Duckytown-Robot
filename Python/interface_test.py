@@ -9,8 +9,8 @@ time.sleep(2)
 # r2 = a_int.get_ticks()
 # print(r2)
 
-a_int.set_motor_pwm(200, 0)
-while(1):
+a_int.set_motor_pwm(0, 200)
+a_int.serial_port.flushInput()
+for i in range(20):
     print(a_int.serial_port.readline())
-time.sleep(2)
 a_int.set_motor_pwm(0, 0)

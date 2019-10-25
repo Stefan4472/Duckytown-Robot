@@ -5,14 +5,13 @@
 #include "wheel_interface.h"
 
 WheelInterface wheelInterface;
-
-//OdometryInterface odometryInterface;
+OdometryInterface odometryInterface;
 
 void setup() 
 {
   Serial.begin(9600);  // TODO: RUN AT A HIGHER BAUD RATE
   Serial.flush();
-  OdometryInterface::init();
+  odometryInterface.init();
   wheelInterface.init();
 }
 
@@ -45,7 +44,22 @@ void loop() // TODO: A PROPER SERIALINTERFACE CLASS
     }
   }
 
-  OdometryInterface::update();
+  long left, right;
+  odometryInterface.getTickCounts(&left, &right);
+  Serial.print(left);
+  Serial.print(' ');
+  Serial.print(right);
+  Serial.println();
+  long x, y;
+  float theta;
+  odometryInterface.getOdometry(&x, &y, &theta);
+  Serial.print(x);
+  Serial.print(' ');
+  Serial.print(y);
+  Serial.print(' ');
+  Serial.print(theta);
+  Serial.println();
+  delay(250);
 }
 
 // TODO: ECHO PACKET, ERROR PACKET (INCLUDING ERROR CODE), MOTOR_ERROR, CURR_STATE PACKET
@@ -75,18 +89,23 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
 
     // GET_ODOMETRY command 
     case static_cast<int>(PiToArduinoCmd::GET_ODOMETRY):
+      long x, y;
+      float theta;
+      odometryInterface.getOdometry(&x, &y, &theta); // TODO: CURRENTLY ONLY CAN SUPPORT FLOATS!
       response->commandID = static_cast<int>(ArduinoToPiRsp::ODOMETRY);
-      response->arg1 = x_world;
-      response->arg2 = y_world;
-      response->arg3 = theta_world;
+      response->arg1 = (float) x;
+      response->arg2 = (float) y;
+      response->arg3 = theta;
       response->seqNum = request->seqNum;
       return true;
 
     // GET_TICKS command 
     case static_cast<int>(PiToArduinoCmd::GET_TICKS):
+      long left, right;
+      odometryInterface.getTickCounts(&left, &right);
       response->commandID = static_cast<int>(ArduinoToPiRsp::TICKS);
-      response->arg1 = (float) left_count;
-      response->arg2 = (float) right_count;
+      response->arg1 = (float) left;
+      response->arg2 = (float) right;
       response->seqNum = request->seqNum;
       return true;
 

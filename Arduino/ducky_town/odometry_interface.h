@@ -1,19 +1,31 @@
 #ifndef ODOMETRY_INTERFACE_H
 #define ODOMETRY_INTERFACE_H
 
-// TODO: PUT THESE IN A CLASS OR A NAMESPACE OR SOMETHING
-extern volatile long left_count; // track # of left wheel movements, CCW is positive
-extern volatile long right_count; // track # of right wheel movements
-extern volatile long x_world; // x pos in world frame (in mm? should be same as WHEEL_BASE)
-extern volatile long y_world; // y pos in world frame (in mm? should be same as WHEEL_BASE)
-extern volatile long theta_world; // angle pos in world frame (in rads?)
+class OdometryInterface
+{   
+  private: 
+    // Values of leftCount and rightCount the last time 'getOdometry()'
+    // was called.
+    long prevLeftCount, prevRightCount;
+    // 
+    long prevX, prevY;
+    float prevTheta;
+    
+  public:
+    // Tracks the number of ticks on the left wheel.
+    // Positive value = counter-clock-wise.
+    volatile long leftCount; 
+    // Tracks the number of ticks seen on the right wheel.
+    // Positive value = counter-clock-wise
+    volatile long rightCount; 
 
-extern long prev_left_count;
-extern long prev_right_count;
-
-namespace OdometryInterface
-{
-  void init();
-  void update();
+    // Initialize odometry. TODO: WHICH INTERRUPTS AND PINS DOES THIS SET?
+    void init();
+    // Get raw tick counts for each wheel.
+    void getTickCounts(long* left, long* right);
+    // Calculates current (x, y, theta) from the starting position.
+    void getOdometry(long* x, long* y, float* theta);
+    // Reset to some authoritative position.
+    void resetTo(long x, long y, float theta);
 };
 #endif
