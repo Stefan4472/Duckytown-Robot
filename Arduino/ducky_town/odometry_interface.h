@@ -16,13 +16,13 @@ class OdometryInterface
     // was called.
     long prevLeftCount, prevRightCount;
     // 
-    long prevX, prevY;
+    float prevX, prevY;
     float prevTheta;
     
   public:
     // Current position and orientation (from starting position) 
     // (x, y) are in centimeters, (theta) is in radians.
-    long x, y;
+    float x, y;
     float theta;
     
     // Tracks the number of ticks on the left wheel.

@@ -77,23 +77,28 @@ void OdometryInterface::update()
   // Variables prefixed with 'd' indicate a difference/derivative.
   long ticks_left, ticks_right;
   long dticks_left, dticks_right;
-  long ddist_left, ddist_right;
-  long ddist_travelled;
+  float ddist_left, ddist_right;
+  float ddist_travelled;
   float dtheta;
 
   // Grap values for left and right TODO: MAKE VOLATILE?
+//  Serial.println("prevleftCount " + String(this->prevLeftCount));
   noInterrupts();  // TODO: IS THIS NECESSARY?
   ticks_left = this->leftCount;
   ticks_right = this->rightCount;
   interrupts();
+//  Serial.println("leftCount " + String(this->leftCount) + " ticks_left " + String(ticks_left));
 
   // Calculate changes
   dticks_left = ticks_left - this->prevLeftCount;
   dticks_right = ticks_right - this->prevRightCount;
 
+//  Serial.println("Dticks_left " + String(dticks_left));
+
   // Calculate distance travelled by each wheel in CM
   ddist_left = (dticks_left / TICKS_PER_ROTATION) * WHEEL_CIRCUMFERENCE_CM;
   ddist_right = (dticks_right / TICKS_PER_ROTATION) * WHEEL_CIRCUMFERENCE_CM;
+  Serial.println("Distance Left " + String(ddist_left));
 
   // Calculate distance travelled along current heading in CM 
   ddist_travelled = (ddist_left + ddist_right) / 2.0;
@@ -113,6 +118,8 @@ void OdometryInterface::update()
   this->prevX = this->x;
   this->prevY = this->y;
   this->prevTheta = this->theta;
+
+  
 }
 
 void OdometryInterface::resetTo(long x, long y, float theta)
