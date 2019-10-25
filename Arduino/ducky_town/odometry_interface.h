@@ -15,7 +15,7 @@
 // Radius of the wheel (centimeters)
 #define WHEEL_RADIUS_CM 3.5
 // Circumference of the wheel (centimeters)
-const long WHEEL_CIRCUMFERENCE_CM = 2.0 * PI * WHEEL_RADIUS_CM;
+const float WHEEL_CIRCUMFERENCE_CM = 2.0 * PI * WHEEL_RADIUS_CM;
 
 class OdometryInterface
 {   
@@ -24,13 +24,13 @@ class OdometryInterface
     // was called.
     long prevLeftCount, prevRightCount;
     // 
-    long prevX, prevY;
+    float prevX, prevY;
     float prevTheta;
     
   public:
     // Current position and orientation (from starting position) 
     // (x, y) are in centimeters, (theta) is in radians.
-    long x, y;
+    float x, y;
     float theta;
     // TOTAL distance travelled
     long distTravelled;

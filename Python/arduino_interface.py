@@ -108,19 +108,19 @@ class ArduinoInterface:
         parsed_packet = ArduinoToPiPacket(bytes(raw_packet))
         return (parsed_packet.arg1, parsed_packet.arg2)
 
-    def command_openloop_straight(speed, distance):
+    def command_openloop_straight(self, speed, distance):
         self.seq_num += 1
         send_packet = PiToArduinoPacket(PiToArduinoPacket.CMD_OPENLOOP_STRAIGHT, \
             self.seq_num, speed, distance)
         self.serial_port.write(bytes(send_packet.to_byte_string()))
 
-    def command_openloop_rcurve(speed, turn_radius, theta):
+    def command_openloop_rcurve(self, speed, turn_radius, theta):
         self.seq_num += 1
         send_packet = PiToArduinoPacket(PiToArduinoPacket.CMD_OPENLOOP_R_CURVE, \
             self.seq_num, speed, turn_radius, theta)
         self.serial_port.write(bytes(send_packet.to_byte_string()))
 
-    def command_openloop_lcurve(speed, turn_radius, theta):
+    def command_openloop_lcurve(self, speed, turn_radius, theta):
         self.seq_num += 1
         send_packet = PiToArduinoPacket(PiToArduinoPacket.CMD_OPENLOOP_L_CURVE, \
             self.seq_num, speed, turn_radius, theta)
