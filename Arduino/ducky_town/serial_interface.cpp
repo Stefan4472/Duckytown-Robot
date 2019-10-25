@@ -1,5 +1,39 @@
 #include "serial_interface.h"
 
+void SerialInterface::init(long baudrate)
+{
+  Serial.begin(baudrate);
+  Serial.flush();
+}
+
+bool SerialInterface::getNextPacket(PiToArduinoPacket* packet)
+{
+  // Check if enough data has buffered for a complete packet.
+  if (Serial.available() >= PI_TO_ARDUINO_PACKET_LENGTH)
+  {
+    // Attempt to parse a packet off the serial buffer.
+    if (SerialUtil::readPacket(packet))
+    {
+      return true;
+    } 
+    // Couldn't read a valid packet off the serial buffer:
+    // Send an error packet and flush input.  TODO: NEED A BETTER RECOVERY PROCESS.
+    else 
+    {
+      ArduinoToPiPacket err_packet;
+      err_packet.commandID = static_cast<int>(ArduinoToPiRsp::ILLEGIBLE_PACKET);
+      SerialUtil::writePacket(&err_packet);
+      Serial.flush();
+      return false;
+    }  
+  }
+}
+
+void SerialInterface::sendPacket(ArduinoToPiPacket* packet)
+{
+  SerialUtil::writePacket(packet);
+}
+
 int32_t SerialUtil::readInt32()
 {
   int32_t read_int = 0;

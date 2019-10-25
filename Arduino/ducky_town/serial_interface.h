@@ -4,6 +4,18 @@
 #include "Arduino.h"
 #include "packet_defs.h"
 
+class SerialInterface
+{
+  public:
+    void init(long baudrate);
+    // Gets the next packet of the serial interface, if one is 
+    // there. Returns whether a packet was read.
+    bool getNextPacket(PiToArduinoPacket* packet);
+    // Send packet over serial.
+    void sendPacket(ArduinoToPiPacket* packet);
+};
+
+// TODO: MOVE THIS OUT TO A DIFFERENT FILE
 namespace SerialUtil 
 { 
   int32_t readInt32();

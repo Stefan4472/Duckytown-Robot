@@ -4,43 +4,33 @@
 #include "odometry_interface.h"
 #include "wheel_interface.h"
 
+SerialInterface serialInterface;
 WheelInterface wheelInterface;
 OdometryInterface odometryInterface;
 
+// TODO: RUN AT A HIGHER BAUD RATE
+const long BAUD_RATE = 9600;
+
 void setup() 
 {
-  Serial.begin(9600);  // TODO: RUN AT A HIGHER BAUD RATE
-  Serial.flush();
+  serialInterface.init(BAUD_RATE);
   odometryInterface.init();
   wheelInterface.init();
 }
 
-void loop() // TODO: A PROPER SERIALINTERFACE CLASS
+void loop()
 {
-  // Check if a packet has buffered  
-  while (Serial.available() >= 14) 
+  static PiToArduinoPacket recv_packet;
+  static ArduinoToPiPacket send_packet;
+  
+  // Process any queued packets.
+  while (serialInterface.getNextPacket(&recv_packet))
   {
-    PiToArduinoPacket recv_packet;
-    bool got_packet = SerialUtil::readPacket(&recv_packet);
-
-    if (got_packet) 
+    // Create response
+    ArduinoToPiPacket send_packet;
+    if (handleRequest(&recv_packet, &send_packet))
     {
-      // Create response
-      ArduinoToPiPacket send_packet;
-      if (handleRequest(&recv_packet, &send_packet))
-      {
-        SerialUtil::writePacket(&send_packet);
-      }
-    }
-    // Couldn't read a valid packet off the serial buffer.
-    else 
-    {
-      // Create and write an error packet.
-      ArduinoToPiPacket err_packet;
-      err_packet.commandID = static_cast<int>(ArduinoToPiRsp::ILLEGIBLE_PACKET);
-      SerialUtil::writePacket(&err_packet);
-      // Flush any remaining serial input. TODO: NEED A BETTER RECOVERY PROCESS.
-      Serial.flush();
+      serialInterface.sendPacket(&send_packet);
     }
   }
 

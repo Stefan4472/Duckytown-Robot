@@ -10,6 +10,9 @@ struct PiToArduinoPacket
   uint8_t seqNum;
 };
 
+const uint8_t PI_TO_ARDUINO_PACKET_LENGTH = 14;
+const uint8_t ARDUINO_TO_PI_PACKET_LENGTH = 14;
+
 enum class PiToArduinoCmd
 {
   ECHO = 1,
