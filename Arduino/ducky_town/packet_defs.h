@@ -21,7 +21,7 @@ enum class PiToArduinoCmd
   GET_TICKS = 6
 };
 
-enum class ArduinoToPiRsp
+enum class ArduinoToPiRsp   // TODO: THREE LONGS
 {
   ECHO = 1,
   UNRECOGNIZED_COMMAND = 2,

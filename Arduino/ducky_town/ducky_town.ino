@@ -11,45 +11,62 @@ OdometryInterface odometryInterface;
 // TODO: RUN AT A HIGHER BAUD RATE
 const long BAUD_RATE = 9600;
 
+unsigned long lastLoop;
+
 void setup() 
 {
   serialInterface.init(BAUD_RATE);
   odometryInterface.init();
   wheelInterface.init();
+  lastLoop = millis();
 }
+
+int ms_since_print = 0;
 
 void loop()
 {
   static PiToArduinoPacket recv_packet;
   static ArduinoToPiPacket send_packet;
+  static unsigned long curr_time;
+
+  curr_time = millis();
   
   // Process any queued packets.
   while (serialInterface.getNextPacket(&recv_packet))
   {
-    // Create response
-    ArduinoToPiPacket send_packet;
+    Serial.println("Got another packet");
+    // Handle the request and send a response if requested.
     if (handleRequest(&recv_packet, &send_packet))
     {
       serialInterface.sendPacket(&send_packet);
     }
   }
 
-  long left, right;
-  odometryInterface.getTickCounts(&left, &right);
-  Serial.print(left);
-  Serial.print(' ');
-  Serial.print(right);
-  Serial.println();
-  long x, y;
-  float theta;
-  odometryInterface.getOdometry(&x, &y, &theta);
-  Serial.print(x);
-  Serial.print(' ');
-  Serial.print(y);
-  Serial.print(' ');
-  Serial.print(theta);
-  Serial.println();
-  delay(250);
+  odometryInterface.update();
+
+  // Print readings once every 250 ms.
+  ms_since_print += curr_time - lastLoop;
+  if (ms_since_print > 250)
+  {
+    long left, right;
+    odometryInterface.getTickCounts(&left, &right);  // TODO: ARE TICK COUNTS RESETTING EACH TIME WE CONNECT?
+    Serial.println();
+    Serial.print("Left/Right tick counts: ");
+    Serial.print(left);
+    Serial.print(" - ");
+    Serial.print(right);
+    Serial.println();
+    Serial.print("World-frame position: ");
+    Serial.print(odometryInterface.x);
+    Serial.print(" - ");
+    Serial.print(odometryInterface.y);
+    Serial.print(" - ");
+    Serial.print(odometryInterface.theta);
+    Serial.println();
+    ms_since_print = 0;
+  }
+  
+  lastLoop = curr_time;
 }
 
 // TODO: ECHO PACKET, ERROR PACKET (INCLUDING ERROR CODE), MOTOR_ERROR, CURR_STATE PACKET
@@ -81,11 +98,10 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
     case static_cast<int>(PiToArduinoCmd::GET_ODOMETRY):
       long x, y;
       float theta;
-      odometryInterface.getOdometry(&x, &y, &theta); // TODO: CURRENTLY ONLY CAN SUPPORT FLOATS!
       response->commandID = static_cast<int>(ArduinoToPiRsp::ODOMETRY);
-      response->arg1 = (float) x;
-      response->arg2 = (float) y;
-      response->arg3 = theta;
+      response->arg1 = (float) odometryInterface.x;
+      response->arg2 = (float) odometryInterface.y;
+      response->arg3 = odometryInterface.theta;
       response->seqNum = request->seqNum;
       return true;
 

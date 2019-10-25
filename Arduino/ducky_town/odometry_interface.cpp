@@ -1,13 +1,21 @@
 #include "odometry_interface.h"
 #include "Arduino.h"
 
-const int8_t TICKS_PER_ROTATION = 8; 
-const int8_t LOOKUP_TABLE[] = {0,0,0,-1,0,0,1,0,0,1,0,0,-1,0,0,0};
-const long WHEEL_BASE_MM = 175; // width between wheels (in mm? smaller units are useful to avoid floats)
-const long WHEEL_RADIUS_MM = 35; // should be same unit as WHEEL_BASE
-//const long CHASSIS_LENGTH_MM = 120; // length from center of wheel axis to front point we are controlling 
+// Number of ticks on the wheel.
+#define TICKS_PER_ROTATION 8.0
+// Width between wheels (centimeters)
+#define WHEEL_BASE_CM 17.5
+// Radius of the wheel (centimeters)
+#define WHEEL_RADIUS_CM 3.5
+// Circumference of the wheel (centimeters)
+const long WHEEL_CIRCUMFERENCE_CM = 2.0 * PI * WHEEL_RADIUS_CM;
+
+// length from center of wheel axis to front point we are controlling 
+//const long CHASSIS_LENGTH_CM = 12.0; 
+
 const uint8_t NUM_SENSORS = 4;
 uint16_t sensorValues[NUM_SENSORS];
+const int8_t LOOKUP_TABLE[] = {0,0,0,-1,0,0,1,0,0,1,0,0,-1,0,0,0};
 
 // TODO: MAKE PART OF ODOMETRYINTERFACE CLASS
 OdometryInterface* odometrySingleton;
@@ -39,16 +47,6 @@ void left_wheel_isr() {
     odometrySingleton->leftCount += LOOKUP_TABLE[left_enc_val & 0b1111];
 }
 
-// TODO: MAKE INTO A MACRO
-long delta_theta(long deltaRight, long deltaLeft) {
-  return atan2( (deltaRight - deltaLeft) * PI * WHEEL_RADIUS_MM, WHEEL_BASE_MM/2 );
-}
-
-// forward distance traveled in robot frame, use cos or sin to calculate in world frame
-long delta_x_robot(long deltaRight, long deltaLeft) {
-  return TICKS_PER_ROTATION * (deltaRight + deltaLeft) * PI * WHEEL_RADIUS_MM;
-}
-
 void OdometryInterface::init()
 {
   pinMode(2, INPUT);
@@ -70,58 +68,64 @@ void OdometryInterface::getTickCounts(long* left, long* right)
   interrupts();
 }
 
-void OdometryInterface::getOdometry(long* x, long* y, float* theta)
+void OdometryInterface::update()
 {
   /*Serial.print(right_count);
   Serial.print('/');
   Serial.print(left_count);
   Serial.println("Updating odometry");*/
-  long left, right;
-  long d_left, d_right;
-  long dist_left, dist_right;
-  long dist_travelled;
-  float heading_change;
+  // Variables prefixed with 'd' indicate a difference/derivative.
+  long ticks_left, ticks_right;
+  long dticks_left, dticks_right;
+  long ddist_left, ddist_right;
+  long ddist_travelled;
+  float dtheta;
 
   // Grap values for left and right TODO: MAKE VOLATILE?
   noInterrupts();  // TODO: IS THIS NECESSARY?
-  right = this->rightCount;
-  left = this->leftCount;
+  ticks_left = this->leftCount;
+  ticks_right = this->rightCount;
   interrupts();
 
   // Calculate changes
-  d_right = right - this->prevRightCount;
-  d_left = left - this->prevLeftCount;
+  dticks_left = ticks_left - this->prevLeftCount;
+  dticks_right = ticks_right - this->prevRightCount;
 
   // Calculate distance travelled by each wheel 
-  dist_left = (d_left / TICKS_PER_ROTATION) * 2.0 * PI * WHEEL_RADIUS_MM;
-  dist_right = (d_right / TICKS_PER_ROTATION) * 2.0 * PI * WHEEL_RADIUS_MM;
+  ddist_left = (dticks_left / TICKS_PER_ROTATION) * WHEEL_CIRCUMFERENCE_CM;
+  ddist_right = (dticks_right / TICKS_PER_ROTATION) * WHEEL_CIRCUMFERENCE_CM;
 
   // Calculate distance travelled along current heading 
-  dist_travelled = (dist_left + dist_right) / 2.0;
+  ddist_travelled = (ddist_left + ddist_right) / 2.0;
 
   // Calculate heading change
-  heading_change = atan2((dist_right - dist_left) / 2.0, WHEEL_BASE_MM / 2.0);
+  dtheta = atan2((ddist_right - ddist_left) / 2.0, WHEEL_BASE_CM / 2.0);
   
   // Calculate new position
-  this->prevTheta += heading_change;
-  this->prevX += dist_travelled * cos(this->prevTheta); 
-  this->prevY += dist_travelled * sin(this->prevTheta);
+  this->theta = this->prevTheta + dtheta;
+  this->x = this->prevX + ddist_travelled * cos(this->theta); 
+  this->y = this->prevY + ddist_travelled * sin(this->theta);
   
-  this->prevLeftCount = left;
-  this->prevRightCount = right;
+  this->prevLeftCount = ticks_left;
+  this->prevRightCount = ticks_right;
 
   // Set values.
-  *x = this->prevX;
-  *y = this->prevY;
-  *theta = this->prevTheta;
+  this->prevX = this->x;
+  this->prevY = this->y;
+  this->prevTheta = this->theta;
 }
 
 void OdometryInterface::resetTo(long x, long y, float theta)
 {
+  Serial.println("Resetting odometry");
   noInterrupts(); // TODO: IS THIS NECESSARY?
   this->rightCount = 0;
   this->leftCount = 0;
   interrupts();
+
+  this->x = x;
+  this->y = y;
+  this->theta = theta;
   
   this->prevX = x;
   this->prevY = y;

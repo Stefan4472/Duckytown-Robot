@@ -27,6 +27,7 @@ bool SerialInterface::getNextPacket(PiToArduinoPacket* packet)
       return false;
     }  
   }
+  return false;
 }
 
 void SerialInterface::sendPacket(ArduinoToPiPacket* packet)
