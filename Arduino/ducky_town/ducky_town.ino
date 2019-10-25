@@ -3,10 +3,12 @@
 #include "serial_interface.h"
 #include "odometry_interface.h"
 #include "wheel_interface.h"
+#include "open_loop_controller.h"
 
 SerialInterface serialInterface;
 WheelInterface wheelInterface;
 OdometryInterface odometryInterface;
+OpenLoopController openLoopController;
 
 // TODO: RUN AT A HIGHER BAUD RATE
 const long BAUD_RATE = 9600;
@@ -42,8 +44,11 @@ void loop()
     }
   }
 
+  // Update odometry
   odometryInterface.update();
-
+  // Update openloop controller
+  openLoopController.update(&odometryInterface, &wheelInterface);
+  
   // Print readings once every 250 ms.
   ms_since_print += curr_time - lastLoop;
   if (ms_since_print > 250)
@@ -115,6 +120,24 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
       response->seqNum = request->seqNum;
       return true;
 
+    // SET_OPENLOOP_STRAIGHT command 
+    case static_cast<int>(PiToArduinoCmd::SET_OPENLOOP_STRAIGHT):
+//      float distance = request->arg2;
+      openLoopController.commandStraight(request->arg1, &wheelInterface);
+      return false;
+
+    // SET_OPENLOOP_R_CURVE command 
+    case static_cast<int>(PiToArduinoCmd::SET_OPENLOOP_R_CURVE):
+//      theta = request->arg3;
+      openLoopController.commandRightTurn(request->arg1, request->arg2, &wheelInterface);
+      return false;
+
+    // SET_OPENLOOP_R_CURVE command 
+    case static_cast<int>(PiToArduinoCmd::SET_OPENLOOP_L_CURVE):
+//      theta = request->arg3;
+      openLoopController.commandRightTurn(request->arg1, request->arg2, &wheelInterface);
+      return false;
+  
     // Unrecognized/unsupported commandID
     default: 
       response->commandID = static_cast<int>(ArduinoToPiRsp::UNRECOGNIZED_COMMAND);

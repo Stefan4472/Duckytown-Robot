@@ -18,7 +18,10 @@ enum class PiToArduinoCmd
   ECHO = 1,
   SET_MOTORS = 3,
   GET_ODOMETRY = 5,
-  GET_TICKS = 6
+  GET_TICKS = 6,
+  SET_OPENLOOP_STRAIGHT = 7,
+  SET_OPENLOOP_R_CURVE = 8,
+  SET_OPENLOOP_L_CURVE = 9
 };
 
 enum class ArduinoToPiRsp   // TODO: THREE LONGS

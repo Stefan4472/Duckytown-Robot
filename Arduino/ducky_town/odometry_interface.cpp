@@ -3,12 +3,6 @@
 
 // Number of ticks on the wheel.
 #define TICKS_PER_ROTATION 8.0
-// Width between wheels (centimeters)
-#define WHEEL_BASE_CM 17.5
-// Radius of the wheel (centimeters)
-#define WHEEL_RADIUS_CM 3.5
-// Circumference of the wheel (centimeters)
-const long WHEEL_CIRCUMFERENCE_CM = 2.0 * PI * WHEEL_RADIUS_CM;
 
 // length from center of wheel axis to front point we are controlling 
 //const long CHASSIS_LENGTH_CM = 12.0; 
@@ -109,6 +103,10 @@ void OdometryInterface::update()
   this->prevLeftCount = ticks_left;
   this->prevRightCount = ticks_right;
 
+  this->distTravelled += ddist_travelled;
+  this->distLeft += ddist_left;
+  this->distRight += ddist_right;
+  
   // Set values.
   this->prevX = this->x;
   this->prevY = this->y;
@@ -130,6 +128,10 @@ void OdometryInterface::resetTo(long x, long y, float theta)
   this->prevX = x;
   this->prevY = y;
   this->prevTheta = theta;
+
+//  this->distTravelled = 0;  // TODO: HOW TO GET THESE VALUES WITHOUT RESETTING?
+//  this->distLeft = 0;
+//  this->distRight = 0;
 }
 
 

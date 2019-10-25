@@ -1,6 +1,7 @@
 #ifndef ODOMETRY_INTERFACE_H
 #define ODOMETRY_INTERFACE_H
 
+#include "Arduino.h"
 //struct OdometryData
 //{
 //  long x, y;
@@ -8,6 +9,13 @@
 //  long leftCount, rightCount;
 //  long distTravelled, distLeft, distRight;
 //};
+
+// Width between wheels (centimeters)
+#define WHEEL_BASE_CM 17.5
+// Radius of the wheel (centimeters)
+#define WHEEL_RADIUS_CM 3.5
+// Circumference of the wheel (centimeters)
+const long WHEEL_CIRCUMFERENCE_CM = 2.0 * PI * WHEEL_RADIUS_CM;
 
 class OdometryInterface
 {   
@@ -24,6 +32,9 @@ class OdometryInterface
     // (x, y) are in centimeters, (theta) is in radians.
     long x, y;
     float theta;
+    // TOTAL distance travelled
+    long distTravelled;
+    long distLeft, distRight;
     
     // Tracks the number of ticks on the left wheel.
     // Positive value = counter-clock-wise.
