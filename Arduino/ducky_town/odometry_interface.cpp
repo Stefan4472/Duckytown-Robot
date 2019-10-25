@@ -8,7 +8,7 @@
 // Radius of the wheel (centimeters)
 #define WHEEL_RADIUS_CM 3.5
 // Circumference of the wheel (centimeters)
-const long WHEEL_CIRCUMFERENCE_CM = 2.0 * PI * WHEEL_RADIUS_CM;
+const float WHEEL_CIRCUMFERENCE_CM = 2.0 * PI * WHEEL_RADIUS_CM;
 
 // length from center of wheel axis to front point we are controlling 
 //const long CHASSIS_LENGTH_CM = 12.0; 
@@ -91,20 +91,20 @@ void OdometryInterface::update()
   dticks_left = ticks_left - this->prevLeftCount;
   dticks_right = ticks_right - this->prevRightCount;
 
-  // Calculate distance travelled by each wheel 
+  // Calculate distance travelled by each wheel in CM
   ddist_left = (dticks_left / TICKS_PER_ROTATION) * WHEEL_CIRCUMFERENCE_CM;
   ddist_right = (dticks_right / TICKS_PER_ROTATION) * WHEEL_CIRCUMFERENCE_CM;
 
-  // Calculate distance travelled along current heading 
+  // Calculate distance travelled along current heading in CM 
   ddist_travelled = (ddist_left + ddist_right) / 2.0;
 
-  // Calculate heading change
+  // Calculate heading change in Rads
   dtheta = atan2((ddist_right - ddist_left) / 2.0, WHEEL_BASE_CM / 2.0);
   
   // Calculate new position
   this->theta = this->prevTheta + dtheta;
-  this->x = this->prevX + ddist_travelled * cos(this->theta); 
-  this->y = this->prevY + ddist_travelled * sin(this->theta);
+  this->x = this->prevX + ddist_travelled * cos(dtheta); 
+  this->y = this->prevY + ddist_travelled * sin(dtheta);
   
   this->prevLeftCount = ticks_left;
   this->prevRightCount = ticks_right;
