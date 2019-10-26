@@ -5,11 +5,13 @@
 #include "wheel_interface.h"
 #include "icontroller.h"
 #include "open_loop_controller.h"
+#include "closed_loop_controller.h"
 
 SerialInterface serialInterface;
 WheelInterface wheelInterface;
 OdometryInterface odometryInterface;
 OpenLoopController openLoopController;
+ClosedLoopController closedLoopController;
 IController* currController;
 
 // TODO: RUN AT A HIGHER BAUD RATE
@@ -152,7 +154,15 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
       Serial.println("Turning on open-loop control");
       currController = &openLoopController;
       return false;
-  
+
+    // SET_CLOSEDLOOP command 
+    case static_cast<int>(PiToArduinoCmd::SET_CLOSEDLOOP):
+//      Serial.println("Running left curve, target = " + String(request->arg3));
+      closedLoopController.commandPosition(request->arg1, request->arg2, request->arg3); //, &wheelInterface, &odometryInterface);
+      Serial.println("Turning on closed-loop control");
+      currController = &closedLoopController;
+      return false;
+      
     // Unrecognized/unsupported commandID
     default: 
       response->commandID = static_cast<int>(ArduinoToPiRsp::UNRECOGNIZED_COMMAND);

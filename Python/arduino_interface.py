@@ -12,6 +12,8 @@ class PiToArduinoPacket:
     CMD_OPENLOOP_STRAIGHT = 7
     CMD_OPENLOOP_R_CURVE = 8
     CMD_OPENLOOP_L_CURVE = 9
+    CMD_CLOSEDLOOP = 10
+    CMD_RESET_ODOMETRY = 11
 
     def __init__(self, commandID, seq_num, arg1=0, arg2=0, arg3=0):
         self.commandID = commandID
@@ -88,7 +90,7 @@ class ArduinoInterface:
             self.seq_num, left, right)
         # Write the packet
         bytes_written = self.serial_port.write(bytes(send_packet.to_byte_string()))
-        
+
     def get_odometry(self):
         self.seq_num += 1
         send_packet = PiToArduinoPacket(PiToArduinoPacket.CMD_GET_ODOMETRY, \
@@ -108,20 +110,26 @@ class ArduinoInterface:
         parsed_packet = ArduinoToPiPacket(bytes(raw_packet))
         return (parsed_packet.arg1, parsed_packet.arg2)
 
-    def command_openloop_straight(self, speed, distance):
+    def command_openloop_straight(self, speed, distance=0.0):
         self.seq_num += 1
         send_packet = PiToArduinoPacket(PiToArduinoPacket.CMD_OPENLOOP_STRAIGHT, \
             self.seq_num, speed, distance)
         self.serial_port.write(bytes(send_packet.to_byte_string()))
 
-    def command_openloop_rcurve(self, speed, turn_radius, theta):
+    def command_openloop_rcurve(self, speed, turn_radius, theta=0.0):
         self.seq_num += 1
         send_packet = PiToArduinoPacket(PiToArduinoPacket.CMD_OPENLOOP_R_CURVE, \
             self.seq_num, speed, turn_radius, theta)
         self.serial_port.write(bytes(send_packet.to_byte_string()))
 
-    def command_openloop_lcurve(self, speed, turn_radius, theta):
+    def command_openloop_lcurve(self, speed, turn_radius, theta=0.0):
         self.seq_num += 1
         send_packet = PiToArduinoPacket(PiToArduinoPacket.CMD_OPENLOOP_L_CURVE, \
+            self.seq_num, speed, turn_radius, theta)
+        self.serial_port.write(bytes(send_packet.to_byte_string()))
+
+    def command_closedloop(self, wx, wy, wtheta):
+        self.seq_num += 1
+        send_packet = PiToArduinoPacket(PiToArduinoPacket.CMD_CLOSEDLOOP, \
             self.seq_num, speed, turn_radius, theta)
         self.serial_port.write(bytes(send_packet.to_byte_string()))

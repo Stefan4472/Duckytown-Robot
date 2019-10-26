@@ -17,7 +17,7 @@ class OpenLoopController : public IController
   public:  // TODO: CAN THIS HANDLE NEGATIVE SPEEDS?
     void update(OdometryInterface* odometry, WheelInterface* wheels);
     // Provide target == 0.0 for no target
-    void commandStraight(float cmPerSec, float targetDistCm, WheelInterface* wheels);
+    void commandStraight(float cmPerSec, float targetDistCm, WheelInterface* wheels);  // TODO: A COMMANDPOSITION FUNCTION
     void commandRightTurn(float cmPerSec, float turnRadius, float targetRad, WheelInterface* wheels);
     void commandLeftTurn(float cmPerSec, float turnRadius, float targetRad, WheelInterface* wheels);
 };

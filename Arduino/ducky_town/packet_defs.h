@@ -21,7 +21,8 @@ enum class PiToArduinoCmd
   GET_TICKS = 6,
   SET_OPENLOOP_STRAIGHT = 7,
   SET_OPENLOOP_R_CURVE = 8,
-  SET_OPENLOOP_L_CURVE = 9
+  SET_OPENLOOP_L_CURVE = 9,
+  SET_CLOSEDLOOP = 10
 };
 
 enum class ArduinoToPiRsp   // TODO: THREE LONGS
