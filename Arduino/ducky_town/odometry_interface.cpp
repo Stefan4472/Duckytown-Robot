@@ -3,12 +3,6 @@
 
 // Number of ticks on the wheel.
 #define TICKS_PER_ROTATION 8.0
-// Width between wheels (centimeters)
-#define WHEEL_BASE_CM 17.5
-// Radius of the wheel (centimeters)
-#define WHEEL_RADIUS_CM 3.5
-// Circumference of the wheel (centimeters)
-const long WHEEL_CIRCUMFERENCE_CM = 2.0 * PI * WHEEL_RADIUS_CM;
 
 // length from center of wheel axis to front point we are controlling 
 //const long CHASSIS_LENGTH_CM = 12.0; 
