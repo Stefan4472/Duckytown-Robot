@@ -12,6 +12,14 @@ a_int = ArduinoInterface(port, 9600, timeout=3)
 time.sleep(2)
 print('Done')
 
-a_int.command_openloop_lcurve(20, 20, 6.28)
+a_int.serial_port.flushInput()
+a_int.command_openloop_lcurve(10, 10, 6.28)
+# a_int.command_openloop_straight(5, 10)
 while (1):
     print(a_int.serial_port.readline())
+# start_time = time.time()
+# while(time.time() < start_time + 5.0):
+#     print(a_int.serial_port.readline())
+# print('Turning off motors')
+# a_int.set_motor_pwm(0, 0)
+# start_time = time.time()

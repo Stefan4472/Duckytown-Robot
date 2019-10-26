@@ -3,12 +3,14 @@
 #include "serial_interface.h"
 #include "odometry_interface.h"
 #include "wheel_interface.h"
+#include "icontroller.h"
 #include "open_loop_controller.h"
 
 SerialInterface serialInterface;
 WheelInterface wheelInterface;
 OdometryInterface odometryInterface;
 OpenLoopController openLoopController;
+IController* currController;
 
 // TODO: RUN AT A HIGHER BAUD RATE
 const long BAUD_RATE = 9600;
@@ -46,12 +48,16 @@ void loop()
 
   // Update odometry
   odometryInterface.update();
-  // Update openloop controller
-  openLoopController.update(&odometryInterface, &wheelInterface);
+  
+  // Update controller, if one is set.
+  if (currController && !currController->finished)
+  {
+    currController->update(&odometryInterface, &wheelInterface);
+  }
   
   // Print readings once every 250 ms.
   ms_since_print += curr_time - lastLoop;
-  if (ms_since_print > 250)
+  if (ms_since_print > 1000)
   {
     long left, right;
     odometryInterface.getTickCounts(&left, &right);  // TODO: ARE TICK COUNTS RESETTING EACH TIME WE CONNECT?
@@ -74,7 +80,7 @@ void loop()
   lastLoop = curr_time;
 }
 
-// TODO: ECHO PACKET, ERROR PACKET (INCLUDING ERROR CODE), MOTOR_ERROR, CURR_STATE PACKET
+// TODO: MOTOR_ERROR
 // Returns whether to send the response.
 bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
 {
@@ -91,11 +97,14 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
       
     // SET_MOTORS command
     case static_cast<int>(PiToArduinoCmd::SET_MOTORS):
-      Serial.println("Commanding PWMs");
-      Serial.print((int) request->arg1);
-      Serial.print('/');
-      Serial.print((int) request->arg2);
-      Serial.println();
+//      Serial.println("Commanding PWMs");
+//      Serial.print((int) request->arg1);
+//      Serial.print('/');
+//      Serial.print((int) request->arg2);
+//      Serial.println();
+      Serial.println("Turning off open-loop control");
+      // Turn off the controller (if any)
+      currController = NULL;
       wheelInterface.commandPWMs((int) request->arg1, (int) request->arg2);
       return false;
 
@@ -122,20 +131,26 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
 
     // SET_OPENLOOP_STRAIGHT command 
     case static_cast<int>(PiToArduinoCmd::SET_OPENLOOP_STRAIGHT):
-//      float distance = request->arg2;
-      openLoopController.commandStraight(request->arg1, &wheelInterface);
+      Serial.println("Running straight line, target = " + String(request->arg2));
+      openLoopController.commandStraight(request->arg1, request->arg2, &wheelInterface);
+      Serial.println("Turning on open-loop control");
+      currController = &openLoopController;
       return false;
 
     // SET_OPENLOOP_R_CURVE command 
     case static_cast<int>(PiToArduinoCmd::SET_OPENLOOP_R_CURVE):
-//      theta = request->arg3;
-      openLoopController.commandRightTurn(request->arg1, request->arg2, &wheelInterface);
+      Serial.println("Running right curve, target = " + String(request->arg3));
+      openLoopController.commandRightTurn(request->arg1, request->arg2, request->arg3, &wheelInterface);
+      Serial.println("Turning on open-loop control");
+      currController = &openLoopController;
       return false;
 
     // SET_OPENLOOP_R_CURVE command 
     case static_cast<int>(PiToArduinoCmd::SET_OPENLOOP_L_CURVE):
-//      theta = request->arg3;
-      openLoopController.commandRightTurn(request->arg1, request->arg2, &wheelInterface);
+      Serial.println("Running left curve, target = " + String(request->arg3));
+      openLoopController.commandLeftTurn(request->arg1, request->arg2, request->arg3, &wheelInterface);
+      Serial.println("Turning on open-loop control");
+      currController = &openLoopController;
       return false;
   
     // Unrecognized/unsupported commandID
