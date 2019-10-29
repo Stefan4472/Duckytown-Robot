@@ -75,7 +75,7 @@ void OdometryInterface::update()
   float dtheta;
 
   unsigned long curr_time_ms = millis();
-  
+
   // Grap values for left and right TODO: MAKE VOLATILE?
   noInterrupts();  // TODO: IS THIS NECESSARY?
   ticks_left = this->leftCount;
@@ -105,13 +105,13 @@ void OdometryInterface::update()
   this->dX = (this->x - this->prevX) / (1000.0 * (curr_time_ms - lastUpdateMs));
   this->dY = (this->y - this->prevY) / (1000.0 * (curr_time_ms - lastUpdateMs));
   this->dTheta = (this->theta - this->prevTheta) / (1000.0 * (curr_time_ms - lastUpdateMs));
-  
+
   this->prevLeftCount = ticks_left;
   this->prevRightCount = ticks_right;
 
   this->prevDistTravelled = this->distTravelled;
   this->distTravelled += ddist_travelled;
-  
+
   // this->distLeft += ddist_left;
   // this->distRight += ddist_right;
 
