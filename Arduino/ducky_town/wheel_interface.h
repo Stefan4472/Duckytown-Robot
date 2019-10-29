@@ -30,6 +30,7 @@ class WheelInterface
     float rightSpeedFromPWM(uint16_t pwm);
     
   public:
+    int currLPWM, currRPWM;
     bool init();
     // Sets raw PWM inputs to left and right motors
     bool commandPWMs(int leftPWM, int rightPWM);

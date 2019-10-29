@@ -4,9 +4,6 @@
 // Number of ticks on the wheel.
 #define TICKS_PER_ROTATION 8.0
 
-// length from center of wheel axis to front point we are controlling
-//const long CHASSIS_LENGTH_CM = 12.0;
-
 const uint8_t NUM_SENSORS = 4;
 uint16_t sensorValues[NUM_SENSORS];
 const int8_t LOOKUP_TABLE[] = {0,0,0,-1,0,0,1,0,0,1,0,0,-1,0,0,0};
@@ -49,6 +46,8 @@ void OdometryInterface::init()
   // Set the singleton to this instance.
   odometrySingleton = this;
 
+  lastUpdateMs = millis();
+
   // Setup interrupts.
   attachInterrupt(digitalPinToInterrupt(2), left_wheel_isr, CHANGE);
   attachInterrupt(digitalPinToInterrupt(3), right_wheel_isr, CHANGE);
@@ -75,6 +74,8 @@ void OdometryInterface::update()
   float ddist_travelled;
   float dtheta;
 
+  unsigned long curr_time_ms = millis();
+  
   // Grap values for left and right TODO: MAKE VOLATILE?
   noInterrupts();  // TODO: IS THIS NECESSARY?
   ticks_left = this->leftCount;
@@ -100,6 +101,11 @@ void OdometryInterface::update()
   this->x = this->prevX + ddist_travelled * cos(this->theta);
   this->y = this->prevY + ddist_travelled * sin(this->theta);
 
+  // Calculate velocity estimates
+  this->dX = (this->x - this->prevX) / (curr_time_ms - lastUpdateMs);
+  this->dY = (this->y - this->prevY) / (curr_time_ms - lastUpdateMs);
+  this->dTheta = (this->theta - this->prevTheta) / (curr_time_ms - lastUpdateMs);
+  
   this->prevLeftCount = ticks_left;
   this->prevRightCount = ticks_right;
 
@@ -113,6 +119,7 @@ void OdometryInterface::update()
   this->prevX = this->x;
   this->prevY = this->y;
   this->prevTheta = this->theta;
+  lastUpdateMs = curr_time_ms;
 }
 
 void OdometryInterface::resetTo(long x, long y, float theta)

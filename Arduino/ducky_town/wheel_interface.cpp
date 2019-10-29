@@ -70,13 +70,15 @@ bool WheelInterface::init()
 
 bool WheelInterface::commandPWMs(int leftPWM, int rightPWM)
 { 
+  currLPWM = boundLeftPWM(leftPWM);
+  currRPWM = boundRightPWM(rightPWM);
   Serial.print("WheelInterface::commandPWMs: left=");
-  Serial.print(boundLeftPWM(leftPWM));
+  Serial.print(currLPWM);
   Serial.print(" right=");
-  Serial.print(boundRightPWM(rightPWM));
+  Serial.print(currRPWM);
   Serial.println();
-  this->motorShield.setM1Speed(boundLeftPWM(leftPWM));
-  this->motorShield.setM2Speed(boundRightPWM(rightPWM));
+  this->motorShield.setM1Speed(currLPWM);
+  this->motorShield.setM2Speed(currRPWM);
   return !this->motorShield.getFault();
 }
 

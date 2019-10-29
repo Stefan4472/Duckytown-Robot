@@ -9,9 +9,15 @@
 #define WHEEL_RADIUS_CM 3.5
 // Circumference of the wheel (centimeters)
 const float WHEEL_CIRCUMFERENCE_CM = 2.0 * PI * WHEEL_RADIUS_CM;
+// Distance from center of wheel axis to "yoke" (control point)
+#define CHASSIS_LENGTH_CM 12.0
 
 class OdometryInterface
 {
+  private:
+    // Timestamp of last update. Used to estimate velocity.
+    unsigned long lastUpdateMs;
+  
   public:
     // Current position and orientation (from starting position)
     // (x, y) are in centimeters, (theta) is in radians.
@@ -19,7 +25,7 @@ class OdometryInterface
     float theta;
     // TOTAL distance travelled
     float distTravelled;
-    // long distLeft, distRight;
+//    float distLeft, distRight;
 
     // Values of leftCount and rightCount the last time 'getOdometry()'
     // was called.
@@ -28,6 +34,10 @@ class OdometryInterface
     float prevX, prevY;
     float prevTheta;
     float prevDistTravelled;
+
+    // Estimated speeds.
+    float dX, dY, dTheta;
+    
     
 
     // Tracks the number of ticks on the left wheel.

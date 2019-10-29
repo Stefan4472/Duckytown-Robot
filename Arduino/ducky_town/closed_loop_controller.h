@@ -5,6 +5,9 @@
 #include "odometry_interface.h"
 #include "wheel_interface.h"
 
+#define K 1.0
+#define B 1.0
+
 class ClosedLoopController : public IController
 {
   private:

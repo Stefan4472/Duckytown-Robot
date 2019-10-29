@@ -13,8 +13,8 @@ time.sleep(2)
 print('Done')
 
 a_int.serial_port.flushInput()
-a_int.command_openloop_lcurve(10, 10)
-# a_int.command_openloop_straight(5, 10)
+# a_int.command_openloop_rcurve(10, 10, 2*3.14)
+a_int.command_openloop_straight(5, 40)
 while (1):
     print(a_int.serial_port.readline())
 # start_time = time.time()
