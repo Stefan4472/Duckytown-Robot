@@ -48,7 +48,7 @@ void OdometryInterface::init()
 
   // Set the singleton to this instance.
   odometrySingleton = this;
-
+  digitalPinToInterrupt(3);
   // Setup interrupts.
   attachInterrupt(digitalPinToInterrupt(2), left_wheel_isr, CHANGE);
   attachInterrupt(digitalPinToInterrupt(3), right_wheel_isr, CHANGE);

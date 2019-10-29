@@ -28,6 +28,9 @@ void setup()
 }
 
 int ms_since_print = 0;
+bool test_finished = false;
+bool test_started = false;
+unsigned long start_time;
 
 void loop()
 {
@@ -35,50 +38,75 @@ void loop()
   static ArduinoToPiPacket send_packet;
   static unsigned long curr_time;
 
-  curr_time = millis();
-  
-  // Process any queued packets.
-  while (serialInterface.getNextPacket(&recv_packet))
+  if (test_finished && Serial.available())
   {
-    Serial.println("Got another packet");
-    // Handle the request and send a response if requested.
-    if (handleRequest(&recv_packet, &send_packet))
-    {
-      serialInterface.sendPacket(&send_packet);
-    }
+    test_finished = false;
+    test_started = false;
+    Serial.read();
+  }
+  
+  curr_time = millis();
+  if (!test_started) 
+  {
+    start_time = millis();
+    Serial.println("Test started at " + String(start_time));
+    wheelInterface.commandPWMs(100, 100);
+    test_started = true;
   }
 
-  // Update odometry
-  odometryInterface.update();
-  
-  // Update controller, if one is set.
-  if (currController && !currController->finished)
+  if (test_started && !test_finished && curr_time - start_time >= 6000)
   {
-    currController->update(&odometryInterface, &wheelInterface);
-  }
-  
-  // Print readings once every 250 ms.
-  ms_since_print += curr_time - lastLoop;
-  if (ms_since_print > 1000)
-  {
+    test_finished = true;
+    wheelInterface.commandPWMs(0, 0);
+    Serial.println("Took " + String(millis() - start_time) + " ms");
     long left, right;
-    odometryInterface.getTickCounts(&left, &right);  // TODO: ARE TICK COUNTS RESETTING EACH TIME WE CONNECT?
-    Serial.println();
-    Serial.print("Left/Right tick counts: ");
-    Serial.print(left);
-    Serial.print(" - ");
-    Serial.print(right);
-    Serial.println();
-    Serial.print("World-frame position: ");
-    Serial.print(odometryInterface.x);
-    Serial.print(" - ");
-    Serial.print(odometryInterface.y);
-    Serial.print(" - ");
-    Serial.print(odometryInterface.theta);
-    Serial.println();
-    ms_since_print = 0;
+    odometryInterface.getTickCounts(&left, &right);
+    Serial.println("Left: " + String(left) + " Right: " + String(right));
   }
   
+//  // Process any queued packets.
+//  while (serialInterface.getNextPacket(&recv_packet))
+//  {
+//    Serial.println("Got another packet");
+//    // Handle the request and send a response if requested.
+//    if (handleRequest(&recv_packet, &send_packet))
+//    {
+//      serialInterface.sendPacket(&send_packet);
+//    }
+//  }
+//
+//  // Update odometry
+//  odometryInterface.update();
+//
+//  // Update controller, if one is set.
+//  if (currController && !currController->finished)
+//  {
+//    currController->update(&odometryInterface, &wheelInterface);
+//  }
+//
+//  // Print readings once every 250 ms.
+//  ms_since_print += curr_time - lastLoop;
+//  if (ms_since_print > 1000)
+//  {
+//    long left, right;
+//    odometryInterface.getTickCounts(&left, &right);  // TODO: ARE TICK COUNTS RESETTING EACH TIME WE CONNECT?
+//    Serial.println();
+//    Serial.print("Left/Right tick counts: ");
+//    Serial.print(left);
+//    Serial.print(" - ");
+//    Serial.print(right);
+//    Serial.println();
+//    Serial.print("World-frame position: ");
+//    Serial.print(odometryInterface.x);
+//    Serial.print(" - ");
+//    Serial.print(odometryInterface.y);
+//    Serial.print(" - ");
+//    Serial.print(odometryInterface.theta);
+//    Serial.println();
+//    Serial.println("Estimated velocity " + String(odometryInterface.dX));
+//    ms_since_print = 0;
+//  }
+
   lastLoop = curr_time;
 }
 
