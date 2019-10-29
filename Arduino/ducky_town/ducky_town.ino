@@ -19,7 +19,7 @@ const long BAUD_RATE = 9600;
 
 unsigned long lastLoop;
 
-void setup() 
+void setup()
 {
   serialInterface.init(BAUD_RATE);
   odometryInterface.init();
@@ -28,6 +28,9 @@ void setup()
 }
 
 int ms_since_print = 0;
+bool test_finished = false;
+bool test_started = false;
+unsigned long start_time;
 
 void loop()
 {
@@ -36,49 +39,67 @@ void loop()
   static unsigned long curr_time;
 
   curr_time = millis();
-  
-  // Process any queued packets.
-  while (serialInterface.getNextPacket(&recv_packet))
+  if (!test_started) 
   {
-    Serial.println("Got another packet");
-    // Handle the request and send a response if requested.
-    if (handleRequest(&recv_packet, &send_packet))
-    {
-      serialInterface.sendPacket(&send_packet);
-    }
+    start_time = millis();
+    Serial.println("Test started at " + String(start_time));
+    wheelInterface.commandPWMs(100, 100);
+    test_started = true;
   }
 
-  // Update odometry
-  odometryInterface.update();
-  
-  // Update controller, if one is set.
-  if (currController && !currController->finished)
+  if (test_started && !test_finished && curr_time - start_time >= 6000)
   {
-    currController->update(&odometryInterface, &wheelInterface);
-  }
-  
-  // Print readings once every 250 ms.
-  ms_since_print += curr_time - lastLoop;
-  if (ms_since_print > 1000)
-  {
+    test_finished = true;
+    wheelInterface.commandPWMs(0, 0);
+    Serial.println("Took " + String(millis() - start_time) + " ms");
     long left, right;
-    odometryInterface.getTickCounts(&left, &right);  // TODO: ARE TICK COUNTS RESETTING EACH TIME WE CONNECT?
-    Serial.println();
-    Serial.print("Left/Right tick counts: ");
-    Serial.print(left);
-    Serial.print(" - ");
-    Serial.print(right);
-    Serial.println();
-    Serial.print("World-frame position: ");
-    Serial.print(odometryInterface.x);
-    Serial.print(" - ");
-    Serial.print(odometryInterface.y);
-    Serial.print(" - ");
-    Serial.print(odometryInterface.theta);
-    Serial.println();
-    ms_since_print = 0;
+    odometryInterface.getTickCounts(&left, &right);
+    Serial.println("Left: " + String(left) + " Right: " + String(right));
   }
   
+//  // Process any queued packets.
+//  while (serialInterface.getNextPacket(&recv_packet))
+//  {
+//    Serial.println("Got another packet");
+//    // Handle the request and send a response if requested.
+//    if (handleRequest(&recv_packet, &send_packet))
+//    {
+//      serialInterface.sendPacket(&send_packet);
+//    }
+//  }
+//
+//  // Update odometry
+//  odometryInterface.update();
+//
+//  // Update controller, if one is set.
+//  if (currController && !currController->finished)
+//  {
+//    currController->update(&odometryInterface, &wheelInterface);
+//  }
+//
+//  // Print readings once every 250 ms.
+//  ms_since_print += curr_time - lastLoop;
+//  if (ms_since_print > 1000)
+//  {
+//    long left, right;
+//    odometryInterface.getTickCounts(&left, &right);  // TODO: ARE TICK COUNTS RESETTING EACH TIME WE CONNECT?
+//    Serial.println();
+//    Serial.print("Left/Right tick counts: ");
+//    Serial.print(left);
+//    Serial.print(" - ");
+//    Serial.print(right);
+//    Serial.println();
+//    Serial.print("World-frame position: ");
+//    Serial.print(odometryInterface.x);
+//    Serial.print(" - ");
+//    Serial.print(odometryInterface.y);
+//    Serial.print(" - ");
+//    Serial.print(odometryInterface.theta);
+//    Serial.println();
+//    Serial.println("Estimated velocity " + String(odometryInterface.dX));
+//    ms_since_print = 0;
+//  }
+
   lastLoop = curr_time;
 }
 
@@ -96,21 +117,21 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
       response->arg3 = request->arg3;
       response->seqNum = request->seqNum;
       return true;
-      
+
     // SET_MOTORS command
     case static_cast<int>(PiToArduinoCmd::SET_MOTORS):
-//      Serial.println("Commanding PWMs");
-//      Serial.print((int) request->arg1);
-//      Serial.print('/');
-//      Serial.print((int) request->arg2);
-//      Serial.println();
+      //      Serial.println("Commanding PWMs");
+      //      Serial.print((int) request->arg1);
+      //      Serial.print('/');
+      //      Serial.print((int) request->arg2);
+      //      Serial.println();
       Serial.println("Turning off open-loop control");
       // Turn off the controller (if any)
       currController = NULL;
       wheelInterface.commandPWMs((int) request->arg1, (int) request->arg2);
       return false;
 
-    // GET_ODOMETRY command 
+    // GET_ODOMETRY command
     case static_cast<int>(PiToArduinoCmd::GET_ODOMETRY):
       long x, y;
       float theta;
@@ -121,7 +142,7 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
       response->seqNum = request->seqNum;
       return true;
 
-    // GET_TICKS command 
+    // GET_TICKS command
     case static_cast<int>(PiToArduinoCmd::GET_TICKS):
       long left, right;
       odometryInterface.getTickCounts(&left, &right);
@@ -131,7 +152,7 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
       response->seqNum = request->seqNum;
       return true;
 
-    // SET_OPENLOOP_STRAIGHT command 
+    // SET_OPENLOOP_STRAIGHT command
     case static_cast<int>(PiToArduinoCmd::SET_OPENLOOP_STRAIGHT):
       Serial.println("Running straight line, target = " + String(request->arg2));
       openLoopController.commandStraight(request->arg1, request->arg2, &wheelInterface);
@@ -139,7 +160,7 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
       currController = &openLoopController;
       return false;
 
-    // SET_OPENLOOP_R_CURVE command 
+    // SET_OPENLOOP_R_CURVE command
     case static_cast<int>(PiToArduinoCmd::SET_OPENLOOP_R_CURVE):
       Serial.println("Running right curve, target = " + String(request->arg3));
       openLoopController.commandRightTurn(request->arg1, request->arg2, request->arg3, &wheelInterface);
@@ -147,7 +168,7 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
       currController = &openLoopController;
       return false;
 
-    // SET_OPENLOOP_R_CURVE command 
+    // SET_OPENLOOP_R_CURVE command
     case static_cast<int>(PiToArduinoCmd::SET_OPENLOOP_L_CURVE):
       Serial.println("Running left curve, target = " + String(request->arg3));
       openLoopController.commandLeftTurn(request->arg1, request->arg2, request->arg3, &wheelInterface);
@@ -155,16 +176,16 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
       currController = &openLoopController;
       return false;
 
-    // SET_CLOSEDLOOP command 
+    // SET_CLOSEDLOOP command
     case static_cast<int>(PiToArduinoCmd::SET_CLOSEDLOOP):
-//      Serial.println("Running left curve, target = " + String(request->arg3));
+      //      Serial.println("Running left curve, target = " + String(request->arg3));
       closedLoopController.commandPosition(request->arg1, request->arg2, request->arg3); //, &wheelInterface, &odometryInterface);
       Serial.println("Turning on closed-loop control");
       currController = &closedLoopController;
       return false;
-      
+
     // Unrecognized/unsupported commandID
-    default: 
+    default:
       response->commandID = static_cast<int>(ArduinoToPiRsp::UNRECOGNIZED_COMMAND);
       response->seqNum = request->seqNum;
       return true;

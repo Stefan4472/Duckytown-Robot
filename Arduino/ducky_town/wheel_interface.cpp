@@ -70,8 +70,8 @@ bool WheelInterface::init()
 
 bool WheelInterface::commandPWMs(int leftPWM, int rightPWM)
 { 
-  currLPWM = boundLeftPWM(leftPWM);
-  currRPWM = boundRightPWM(rightPWM);
+  currLPWM  = boundLeftPWM(leftPWM);
+  currRPWM  = boundRightPWM(rightPWM);
   Serial.print("WheelInterface::commandPWMs: left=");
   Serial.print(currLPWM);
   Serial.print(" right=");

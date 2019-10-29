@@ -101,10 +101,10 @@ void OdometryInterface::update()
   this->x = this->prevX + ddist_travelled * cos(this->theta);
   this->y = this->prevY + ddist_travelled * sin(this->theta);
 
-  // Calculate velocity estimates
-  this->dX = (this->x - this->prevX) / (curr_time_ms - lastUpdateMs);
-  this->dY = (this->y - this->prevY) / (curr_time_ms - lastUpdateMs);
-  this->dTheta = (this->theta - this->prevTheta) / (curr_time_ms - lastUpdateMs);
+  // Calculate velocity estimates (cm per second)
+  this->dX = (this->x - this->prevX) / (1000.0 * (curr_time_ms - lastUpdateMs));
+  this->dY = (this->y - this->prevY) / (1000.0 * (curr_time_ms - lastUpdateMs));
+  this->dTheta = (this->theta - this->prevTheta) / (1000.0 * (curr_time_ms - lastUpdateMs));
   
   this->prevLeftCount = ticks_left;
   this->prevRightCount = ticks_right;
