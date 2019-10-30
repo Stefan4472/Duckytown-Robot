@@ -27,10 +27,10 @@ void setup()
   lastLoop = millis();
 }
 
-// int ms_since_print = 0;
-// bool test_finished = false;
-// bool test_started = false;
-// unsigned long start_time;
+ int ms_since_print = 0;
+ bool test_started = false;
+ bool test_finished = false;
+ unsigned long start_time;
 
 void loop()
 {
@@ -38,40 +38,47 @@ void loop()
   static ArduinoToPiPacket send_packet;
   static unsigned long curr_time;
 
+  
   curr_time = millis();
-  // if (!test_started)
-  // {
-  //   start_time = millis();
-  //   Serial.println("Test started at " + String(start_time));
-  //   wheelInterface.commandPWMs(100, 100);
-  //   test_started = true;
-  // }
-  //
-  // if (test_finished && Serial.available())
-  // {
-  //   test_finished = false;
-  //   test_started = false;
-  //   Serial.read();
-  // }
-  //
-  // curr_time = millis();
-  // if (!test_started)
-  // {
-  //   start_time = millis();
-  //   Serial.println("Test started at " + String(start_time));
-  //   wheelInterface.commandPWMs(100, 100);
-  //   test_started = true;
-  // }
-  //
-  // if (test_started && !test_finished && curr_time - start_time >= 6000)
-  // {
-  //   test_finished = true;
-  //   wheelInterface.commandPWMs(0, 0);
-  //   Serial.println("Took " + String(millis() - start_time) + " ms");
-  //   long left, right;
-  //   odometryInterface.getTickCounts(&left, &right);
-  //   Serial.println("Left: " + String(left) + " Right: " + String(right));
-  // }
+
+  if (!test_started)
+  {
+    // 50 cm straight
+//    wheelInterface.setSpeedLimit(10.0);
+    closedLoopController.commandPosition(112, 0, 0);
+    currController = &closedLoopController;
+    test_started = true;
+  }
+//  if (test_finished && Serial.available())
+//   {
+//     test_finished = false;
+//     test_started = false;
+//     while (Serial.available())
+//     {
+//        Serial.read();
+//     }
+//   }
+//  
+//   if (!test_started)
+//   {
+//     start_time = millis();
+//     Serial.....println("Test started at " + String(start_time));
+//     odometryInterface.resetTo(0, 0, 0);
+//     //wheelInterface.commandPWMs(350, 350);
+//     wheelInterface.commandStraightSpeed(10.0);
+//     test_started = true;
+//   }
+//  
+//   if (test_started && !test_finished && curr_time - start_time >= 10000)
+//   {
+//     test_finished = true;
+//     wheelInterface.commandPWMs(0, 0);
+//     Serial.println("Took " + String(millis() - start_time) + " ms");
+//     long left, right;
+//     odometryInterface.getTickCounts(&left, &right);
+//     Serial.println("Left: " + String(left) + " Right: " + String(right));
+//     Serial.println("x: " + String(odometryInterface.x) + " y: " + String(odometryInterface.y) + " t: " + String(odometryInterface.theta));
+//   }
 
  // Process any queued packets.
  while (serialInterface.getNextPacket(&recv_packet))
@@ -94,27 +101,27 @@ void loop()
  }
 
  // Print readings once every 250 ms.
- ms_since_print += curr_time - lastLoop;
- if (ms_since_print > 1000)
- {
-   long left, right;
-   odometryInterface.getTickCounts(&left, &right);  // TODO: ARE TICK COUNTS RESETTING EACH TIME WE CONNECT?
-   Serial.println();
-   Serial.print("Left/Right tick counts: ");
-   Serial.print(left);
-   Serial.print(" - ");
-   Serial.print(right);
-   Serial.println();
-   Serial.print("World-frame position: ");
-   Serial.print(odometryInterface.x);
-   Serial.print(" - ");
-   Serial.print(odometryInterface.y);
-   Serial.print(" - ");
-   Serial.print(odometryInterface.theta);
-   Serial.println();
-   Serial.println("Estimated velocity " + String(odometryInterface.dX));
-   ms_since_print = 0;
- }
+// ms_since_print += curr_time - lastLoop;
+// if (ms_since_print > 1000)
+// {
+//   long left, right;
+//   odometryInterface.getTickCounts(&left, &right);
+//   Serial.println();
+//   Serial.print("Left/Right tick counts: ");
+//   Serial.print(left);
+//   Serial.print(" - ");
+//   Serial.print(right);
+//   Serial.println();
+//   Serial.print("World-frame position: ");
+//   Serial.print(odometryInterface.x);
+//   Serial.print(" - ");
+//   Serial.print(odometryInterface.y);
+//   Serial.print(" - ");
+//   Serial.print(odometryInterface.theta);
+//   Serial.println();
+//   Serial.println("Estimated dx " + String(odometryInterface.dX) + " dy " + String(odometryInterface.dY) + " dt " + String(odometryInterface.dTheta));
+//   ms_since_print = 0;
+// }
 
   lastLoop = curr_time;
 }
@@ -190,7 +197,7 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
       openLoopController.commandLeftTurn(request->arg1, request->arg2, request->arg3, &wheelInterface);
       Serial.println("Turning on open-loop control");
       currController = &openLoopController;
-      return false;
+      return false; 
 
     // SET_CLOSEDLOOP command
     case static_cast<int>(PiToArduinoCmd::SET_CLOSEDLOOP):

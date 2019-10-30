@@ -2,6 +2,16 @@
 
 int WheelInterface::boundLeftPWM(int pwm)
 {
+  // Get pwm out of "dead zone"
+  if (pwm > 0 && pwm < 110)
+  {
+    pwm = 110;
+  }
+  else if (pwm < 0 && pwm > -110)
+  {
+    pwm = -110;
+  }
+  
   if (pwm > maxLeftPWM)
   {
     return maxLeftPWM;
@@ -14,10 +24,20 @@ int WheelInterface::boundLeftPWM(int pwm)
   {
     return pwm;
   }
-}
+} 
 
 int WheelInterface::boundRightPWM(int pwm)
 {
+  // Get pwm out of "dead zone"
+  if (pwm > 0 && pwm < 110)
+  {
+    pwm = 110;
+  }
+  else if (pwm < 0 && pwm > -110)
+  {
+    pwm = -110;
+  }
+  
   if (pwm > maxRightPWM)
   {
     return maxRightPWM;
@@ -34,7 +54,7 @@ int WheelInterface::boundRightPWM(int pwm)
 
 int WheelInterface::leftPWMFromSpeed(float cmPerSec)
 {
-  return 6.24 * cmPerSec + 83.16;
+  return (6.24 * cmPerSec + 83.16) * 0.986;
 }
 
 int WheelInterface::rightPWMFromSpeed(float cmPerSec)  // TODO: DOES THIS WORK FOR NEGATIVE VALUES?

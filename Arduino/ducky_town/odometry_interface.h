@@ -35,6 +35,9 @@ class OdometryInterface
     float prevTheta;
     float prevDistTravelled;
 
+    float xLastVelUpdate, yLastVelUpdate, tLastVelUpdate;
+    unsigned long lastVelUpdateMs;
+
     // Estimated speeds.
     float dX, dY, dTheta;
     
@@ -54,6 +57,6 @@ class OdometryInterface
     // Updates odometry values, calculating (x, y, theta)
     void update();
     // Reset to some authoritative position.
-    void resetTo(long x, long y, float theta);
+    void resetTo(float x, float y, float theta);
 };
 #endif

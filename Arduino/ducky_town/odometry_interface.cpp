@@ -47,7 +47,8 @@ void OdometryInterface::init()
   odometrySingleton = this;
 
   lastUpdateMs = millis();
-
+  lastVelUpdateMs = lastUpdateMs;
+  
   // Setup interrupts.
   attachInterrupt(digitalPinToInterrupt(2), left_wheel_isr, CHANGE);
   attachInterrupt(digitalPinToInterrupt(3), right_wheel_isr, CHANGE);
@@ -63,6 +64,7 @@ void OdometryInterface::getTickCounts(long* left, long* right)
 
 void OdometryInterface::update()
 {
+  Serial.println("Updating odometry");
   /*Serial.print(right_count);
   Serial.print('/');
   Serial.print(left_count);
@@ -74,14 +76,12 @@ void OdometryInterface::update()
   float ddist_travelled;
   float dtheta;
 
-  unsigned long curr_time_ms = millis();
-
   // Grap values for left and right TODO: MAKE VOLATILE?
   noInterrupts();  // TODO: IS THIS NECESSARY?
   ticks_left = this->leftCount;
   ticks_right = this->rightCount;
   interrupts();
-
+  Serial.println("Ticks left " + String(ticks_left) + ", " + String(ticks_right));
   // Calculate changes
   dticks_left = ticks_left - this->prevLeftCount;
   dticks_right = ticks_right - this->prevRightCount;
@@ -101,10 +101,26 @@ void OdometryInterface::update()
   this->x = this->prevX + ddist_travelled * cos(this->theta);
   this->y = this->prevY + ddist_travelled * sin(this->theta);
 
-  // Calculate velocity estimates (cm per second)
-  this->dX = (this->x - this->prevX) / (1000.0 * (curr_time_ms - lastUpdateMs));
-  this->dY = (this->y - this->prevY) / (1000.0 * (curr_time_ms - lastUpdateMs));
-  this->dTheta = (this->theta - this->prevTheta) / (1000.0 * (curr_time_ms - lastUpdateMs));
+  unsigned long curr_time_ms = millis();
+
+  // Update velocity estimates every 500 ms
+  if (curr_time_ms - lastVelUpdateMs >= 500)
+  {
+//    Serial.println("Curr time " + String(curr_time_ms) + " last update " + String(lastVelUpdateMs));
+    //Serial.println("x, prev x " + String(x) + ", " + String(prevX));
+//    Serial.println("Seconds since last update " + String((curr_time_ms - lastVelUpdateMs) / 1000.0));
+    this->dX = (this->x - this->xLastVelUpdate) / ((curr_time_ms - lastVelUpdateMs) / 1000.0);
+    this->dY = (this->y - this->yLastVelUpdate) / ((curr_time_ms - lastVelUpdateMs) / 1000.0);
+    this->dTheta = (this->theta - this->tLastVelUpdate) / ((curr_time_ms - lastVelUpdateMs) / 1000.0);
+    Serial.println("dx " + String(dX) + " dy " + String(dY) + " dt " + String(dTheta));
+
+    xLastVelUpdate = x;
+    yLastVelUpdate = y;
+    tLastVelUpdate = theta;
+    lastVelUpdateMs = curr_time_ms;
+  }
+  
+  
 
   this->prevLeftCount = ticks_left;
   this->prevRightCount = ticks_right;
@@ -122,7 +138,7 @@ void OdometryInterface::update()
   lastUpdateMs = curr_time_ms;
 }
 
-void OdometryInterface::resetTo(long x, long y, float theta)
+void OdometryInterface::resetTo(float x, float y, float theta)
 {
   Serial.println("Resetting odometry");
   noInterrupts(); // TODO: IS THIS NECESSARY?

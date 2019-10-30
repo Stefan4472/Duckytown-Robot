@@ -131,5 +131,5 @@ class ArduinoInterface:
     def command_closedloop(self, wx, wy, wtheta):
         self.seq_num += 1
         send_packet = PiToArduinoPacket(PiToArduinoPacket.CMD_CLOSEDLOOP, \
-            self.seq_num, speed, turn_radius, theta)
+            self.seq_num, wx, wy, wtheta)
         self.serial_port.write(bytes(send_packet.to_byte_string()))
