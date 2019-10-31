@@ -64,7 +64,7 @@ void OdometryInterface::getTickCounts(long* left, long* right)
 
 void OdometryInterface::update()
 {
-  Serial.println("Updating odometry");
+//  Serial.println("Updating odometry");
   /*Serial.print(right_count);
   Serial.print('/');
   Serial.print(left_count);
@@ -81,7 +81,7 @@ void OdometryInterface::update()
   ticks_left = this->leftCount;
   ticks_right = this->rightCount;
   interrupts();
-  Serial.println("Ticks left " + String(ticks_left) + ", " + String(ticks_right));
+//  Serial.println("Ticks left " + String(ticks_left) + ", " + String(ticks_right));
   // Calculate changes
   dticks_left = ticks_left - this->prevLeftCount;
   dticks_right = ticks_right - this->prevRightCount;
@@ -112,7 +112,7 @@ void OdometryInterface::update()
     this->dX = (this->x - this->xLastVelUpdate) / ((curr_time_ms - lastVelUpdateMs) / 1000.0);
     this->dY = (this->y - this->yLastVelUpdate) / ((curr_time_ms - lastVelUpdateMs) / 1000.0);
     this->dTheta = (this->theta - this->tLastVelUpdate) / ((curr_time_ms - lastVelUpdateMs) / 1000.0);
-    Serial.println("dx " + String(dX) + " dy " + String(dY) + " dt " + String(dTheta));
+//    Serial.println("dx " + String(dX) + " dy " + String(dY) + " dt " + String(dTheta));
 
     xLastVelUpdate = x;
     yLastVelUpdate = y;

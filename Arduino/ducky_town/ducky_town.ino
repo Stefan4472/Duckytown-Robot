@@ -25,60 +25,122 @@ void setup()
   odometryInterface.init();
   wheelInterface.init();
   lastLoop = millis();
+//  closedLoopController.onConvergedFcn = onClosedLoopConverged;
+//  closedLoopController.commandPosition(70 + 12, 70, PI/2.0);
+//  closedLoopController.commandPosition(200 + 12, 0, 0);
+//  closedLoopController.commandPosition(12, 0, PI/2.0);
+//  currController = &closedLoopController;
 }
 
  int ms_since_print = 0;
  bool test_started = false;
  bool test_finished = false;
  unsigned long start_time;
+ int currIndex = 0;
+ int totalIndexes = 4;
+ float circlePoints[12][3] = {
+    {9,2.4,PI/6.0},
+    {16,9,2*PI/6.0},
+    {18,18,3*PI/6.0},
+    {16,27,4*PI/6.0},
+    {9,33.6,5*PI/6.0},
+    {0,36,PI},
+    {-9,33.6,7*PI/6.0},
+    {-16,27,8*PI/6.0},
+    {-18,18,9*PI/6.0},
+    {-16,9,10*PI/6.0},
+    {-9,2.4,11*PI/6.0},
+    {0,0,0}
+  };
 
+//float circlePoints[4][3] = {
+//    {30, 0, 0},
+//    {40, 0, 0},
+//    {50, 0, 0},
+//    {60, 0, 0}
+//  };
+
+void onClosedLoopConverged()
+{
+  Serial.println("ClosedLoopConverged");
+  Serial.println("x " + String(odometryInterface.x) + " y " + String(odometryInterface.y) + " t " + String(odometryInterface.theta));
+//  Serial.println("ClosedLoopConverged on index " + String(currIndex));
+//  currIndex++;
+//  if (currIndex == totalIndexes)
+//  {
+//    Serial.println("Finished");
+//  }
+//  else 
+//  {
+//    int i = currIndex % 4;
+//    closedLoopController.commandPosition(circlePoints[i][0], circlePoints[i][1], circlePoints[i][2]);
+//    currController = &closedLoopController;
+//    currController->finished = false;
+//  }
+}
+
+bool converged = false;
 void loop()
 {
   static PiToArduinoPacket recv_packet;
   static ArduinoToPiPacket send_packet;
   static unsigned long curr_time;
 
-  
+ 
   curr_time = millis();
 
-  if (!test_started)
-  {
-    // 50 cm straight
-//    wheelInterface.setSpeedLimit(10.0);
-    closedLoopController.commandPosition(112, 0, 0);
-    currController = &closedLoopController;
-    test_started = true;
-  }
-//  if (test_finished && Serial.available())
-//   {
-//     test_finished = false;
-//     test_started = false;
-//     while (Serial.available())
-//     {
-//        Serial.read();
-//     }
-//   }
+//  float radius = 55.0;
 //  
-//   if (!test_started)
-//   {
-//     start_time = millis();
-//     Serial.....println("Test started at " + String(start_time));
-//     odometryInterface.resetTo(0, 0, 0);
-//     //wheelInterface.commandPWMs(350, 350);
-//     wheelInterface.commandStraightSpeed(10.0);
-//     test_started = true;
-//   }
-//  
-//   if (test_started && !test_finished && curr_time - start_time >= 10000)
-//   {
-//     test_finished = true;
-//     wheelInterface.commandPWMs(0, 0);
-//     Serial.println("Took " + String(millis() - start_time) + " ms");
-//     long left, right;
-//     odometryInterface.getTickCounts(&left, &right);
-//     Serial.println("Left: " + String(left) + " Right: " + String(right));
-//     Serial.println("x: " + String(odometryInterface.x) + " y: " + String(odometryInterface.y) + " t: " + String(odometryInterface.theta));
-//   }
+//  float theta = 2.0 * PI * (curr_time / 6000.0);
+//  float x = 12 + radius * sin(theta);
+//  float y = radius - radius * cos(theta);
+//  Serial.println("x: " + String(x) + " y: " + String(y) + " t: " + String(theta));
+//  closedLoopController.commandPosition(x, y, theta);
+//  if (!test_started)
+//  {
+//    closedLoopController.commandPosition(circlePoints[0][0], circlePoints[0][1], circlePoints[0][2]);
+//    currController = &closedLoopController;
+//    // 50 cm straight
+////    wheelInterface.setSpeedLimit(10.0);
+////    closedLoopController.commandPosition(112, 0, 0);
+////    currController = &closedLoopController;
+////    if(closedLoopController.finished || test_started == false){
+////      closedLoopController.commandPosition(circlePoints[cycleNum][0], circlePoints[cycleNum][1], cycleNum*M_PI/6.0);
+////      cycleNum++;
+////    }
+//    test_started = true;
+//    converged = false;
+//  }
+////  if (test_finished && Serial.available())
+////   {
+////     test_finished = false;
+////     test_started = false;
+////     while (Serial.available())
+////     {
+////        Serial.read();
+////     }
+////   }
+////  
+////   if (!test_started)
+////   {
+////     start_time = millis();
+////     Serial.....println("Test started at " + String(start_time));
+////     odometryInterface.resetTo(0, 0, 0);
+////     //wheelInterface.commandPWMs(350, 350);
+////     wheelInterface.commandStraightSpeed(10.0);
+////     test_started = true;
+////   }
+////  
+////   if (test_started && !test_finished && curr_time - start_time >= 10000)
+////   {
+////     test_finished = true;
+////     wheelInterface.commandPWMs(0, 0);
+////     Serial.println("Took " + String(millis() - start_time) + " ms");
+////     long left, right;
+////     odometryInterface.getTickCounts(&left, &right);
+////     Serial.println("Left: " + String(left) + " Right: " + String(right));
+////     Serial.println("x: " + String(odometryInterface.x) + " y: " + String(odometryInterface.y) + " t: " + String(odometryInterface.theta));
+////   }
 
  // Process any queued packets.
  while (serialInterface.getNextPacket(&recv_packet))
@@ -94,34 +156,59 @@ void loop()
  // Update odometry
  odometryInterface.update();
 
+// if (currController && currController->finished)
+// {
+//  Serial.println("ClosedLoopConverged on index " + String(currIndex));
+//  currIndex++;
+//  if (currIndex == totalIndexes)
+//  {
+//    Serial.println("Finished");
+//    currController->finished = true;
+//  }
+//  else 
+//  {
+//    int i = currIndex % 12;
+//    closedLoopController.commandPosition(circlePoints[i][0], circlePoints[i][1], circlePoints[i][2]);
+//    currController = &closedLoopController;
+//    currController->finished = false;
+//  }
+// }
+//
+// if (!currController)
+// {
+//  Serial.println("No controller");
+// }
+// if (currController && currController->finished)
+// {
+//  Serial.println("Controller set, but finished");
+// }
  // Update controller, if one is set.
  if (currController && !currController->finished)
  {
    currController->update(&odometryInterface, &wheelInterface);
  }
 
- // Print readings once every 250 ms.
-// ms_since_print += curr_time - lastLoop;
-// if (ms_since_print > 1000)
-// {
-//   long left, right;
-//   odometryInterface.getTickCounts(&left, &right);
-//   Serial.println();
-//   Serial.print("Left/Right tick counts: ");
-//   Serial.print(left);
-//   Serial.print(" - ");
-//   Serial.print(right);
-//   Serial.println();
-//   Serial.print("World-frame position: ");
-//   Serial.print(odometryInterface.x);
-//   Serial.print(" - ");
-//   Serial.print(odometryInterface.y);
-//   Serial.print(" - ");
-//   Serial.print(odometryInterface.theta);
-//   Serial.println();
-//   Serial.println("Estimated dx " + String(odometryInterface.dX) + " dy " + String(odometryInterface.dY) + " dt " + String(odometryInterface.dTheta));
-//   ms_since_print = 0;
-// }
+ // Print readings once every 1000 ms.
+ ms_since_print += curr_time - lastLoop;
+ if (ms_since_print > 250)
+ {
+   long left, right;
+   odometryInterface.getTickCounts(&left, &right);
+  float yoke_x = odometryInterface.x + CHASSIS_LENGTH_CM * cos(odometryInterface.theta);
+  float yoke_y = odometryInterface.y + CHASSIS_LENGTH_CM * sin(odometryInterface.theta);
+  float yoke_t = odometryInterface.theta;
+  Serial.println("Yoke at " + String(yoke_x) + ", " + String(yoke_y) + ", " + String(yoke_t));
+    
+   Serial.print("World-frame position: ");
+   Serial.print(odometryInterface.x);
+   Serial.print(" - ");
+   Serial.print(odometryInterface.y);
+   Serial.print(" - ");
+   Serial.print(odometryInterface.theta);
+   Serial.println();
+   Serial.println("Estimated dx " + String(odometryInterface.dX) + " dy " + String(odometryInterface.dY) + " dt " + String(odometryInterface.dTheta));
+   ms_since_print = 0;
+ }
 
   lastLoop = curr_time;
 }

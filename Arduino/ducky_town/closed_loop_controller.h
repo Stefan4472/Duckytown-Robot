@@ -13,6 +13,8 @@ class ClosedLoopController : public IController
   public:
     void update(OdometryInterface* odometry, WheelInterface* wheels);
     void commandPosition(float x, float y, float theta);
+    void doATurn(float radius, float velocity, bool left, long startTime);
+    void (*onConvergedFcn)() = NULL;
 };
 
 #endif

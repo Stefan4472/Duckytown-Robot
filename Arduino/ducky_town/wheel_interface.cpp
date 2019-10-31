@@ -3,13 +3,13 @@
 int WheelInterface::boundLeftPWM(int pwm)
 {
   // Get pwm out of "dead zone"
-  if (pwm > 0 && pwm < 110)
+  if (pwm > 0 && pwm < 140)
   {
-    pwm = 110;
+    pwm = 140;
   }
-  else if (pwm < 0 && pwm > -110)
+  else if (pwm < 0 && pwm > -140)
   {
-    pwm = -110;
+    pwm = -140;
   }
   
   if (pwm > maxLeftPWM)
@@ -29,13 +29,13 @@ int WheelInterface::boundLeftPWM(int pwm)
 int WheelInterface::boundRightPWM(int pwm)
 {
   // Get pwm out of "dead zone"
-  if (pwm > 0 && pwm < 110)
+  if (pwm > 0 && pwm < 140)
   {
-    pwm = 110;
+    pwm = 140;
   }
-  else if (pwm < 0 && pwm > -110)
+  else if (pwm < 0 && pwm > -140)
   {
-    pwm = -110;
+    pwm = -140;
   }
   
   if (pwm > maxRightPWM)
@@ -92,11 +92,11 @@ bool WheelInterface::commandPWMs(int leftPWM, int rightPWM)
 { 
   currLPWM  = boundLeftPWM(leftPWM);
   currRPWM  = boundRightPWM(rightPWM);
-  Serial.print("WheelInterface::commandPWMs: left=");
-  Serial.print(currLPWM);
-  Serial.print(" right=");
-  Serial.print(currRPWM);
-  Serial.println();
+//  Serial.print("WheelInterface::commandPWMs: left=");
+//  Serial.print(currLPWM);
+//  Serial.print(" right=");
+//  Serial.print(currRPWM);
+//  Serial.println();
   this->motorShield.setM1Speed(currLPWM);
   this->motorShield.setM2Speed(currRPWM);
   return !this->motorShield.getFault();
