@@ -2,15 +2,15 @@
 
 int WheelInterface::boundLeftPWM(int pwm)
 {
-  // Get pwm out of "dead zone"
-  if (pwm > 0 && pwm < 140)
-  {
-    pwm = 140;
-  }
-  else if (pwm < 0 && pwm > -140)
-  {
-    pwm = -140;
-  }
+//  // Get pwm out of "dead zone"
+//  if (pwm > 0 && pwm < 90)
+//  {
+//    pwm = 90;
+//  }
+//  else if (pwm < 0 && pwm > -90)
+//  {
+//    pwm = -90;
+//  }
   
   if (pwm > maxLeftPWM)
   {
@@ -28,15 +28,15 @@ int WheelInterface::boundLeftPWM(int pwm)
 
 int WheelInterface::boundRightPWM(int pwm)
 {
-  // Get pwm out of "dead zone"
-  if (pwm > 0 && pwm < 140)
-  {
-    pwm = 140;
-  }
-  else if (pwm < 0 && pwm > -140)
-  {
-    pwm = -140;
-  }
+//  // Get pwm out of "dead zone"
+//  if (pwm > 0 && pwm < 90)
+//  {
+//    pwm = 90;
+//  }
+//  else if (pwm < 0 && pwm > -90)
+//  {
+//    pwm = -90;
+//  }
   
   if (pwm > maxRightPWM)
   {
@@ -90,6 +90,8 @@ bool WheelInterface::init()
 
 bool WheelInterface::commandPWMs(int leftPWM, int rightPWM)
 { 
+  Serial.println("currPWM " + String(currLPWM) + ", " + String(currRPWM));
+  Serial.println("commanded " + String(leftPWM) + ", " + String(rightPWM));
   currLPWM  = boundLeftPWM(leftPWM);
   currRPWM  = boundRightPWM(rightPWM);
 //  Serial.print("WheelInterface::commandPWMs: left=");

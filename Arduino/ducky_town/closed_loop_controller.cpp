@@ -6,10 +6,10 @@
 //#define K_ROT 28.0
 //#define B_ROT 2.0
 
-#define K_TRANS 6.8
-#define B_TRANS 4.5
-#define K_ROT 25.0
-#define B_ROT 3.0
+#define K_TRANS 0.40
+#define B_TRANS 0.80
+#define K_ROT 8.0
+#define B_ROT 4.5
 
 // TEMPORARY
 #define K 5.0
@@ -84,11 +84,11 @@ void ClosedLoopController::update(OdometryInterface* odometry, WheelInterface* w
 //    Serial.print(" | Y: " + String(odometry->y));
 //    Serial.println(" | T: " + String(yoke_t));
 ////    
-//    Serial.print("errX: " + String(error[X]));
-//    Serial.print(" | errY: " + String(error[Y]));
-//    Serial.println(" | errT: " + String(theta_error));
-
-//    if (sqrt(x_error*x_error + y_error*y_error) < 5.0)
+    Serial.print("errX: " + String(x_error));
+    Serial.print(" | errY: " + String(y_error));
+    Serial.println(" | errT: " + String(theta_error));
+//
+//    if (sqrt(x_error*x_error + y_error*y_error) < 4.0)
 //    {
 //      if (onConvergedFcn)
 //      {
@@ -100,7 +100,8 @@ void ClosedLoopController::update(OdometryInterface* odometry, WheelInterface* w
 //    }
 //    else 
 //    {
-      wheels->commandPWMs(trans_ddot - theta_ddot, trans_ddot + theta_ddot);
+      finished = false;
+      wheels->commandPWMs(wheels->currLPWM + (trans_ddot - theta_ddot) * 0.97, wheels->currRPWM + trans_ddot + theta_ddot);
 //    }
   }
 }
@@ -117,5 +118,5 @@ void ClosedLoopController::commandPosition(float x, float y, float theta)
   targetX = x;
   targetY = y;
   targetTheta = theta;
-  finished = false;
+//  finished = false;
 }

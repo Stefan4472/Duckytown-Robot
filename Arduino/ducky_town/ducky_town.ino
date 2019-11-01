@@ -26,10 +26,12 @@ void setup()
   wheelInterface.init();
   lastLoop = millis();
 //  closedLoopController.onConvergedFcn = onClosedLoopConverged;
-//  closedLoopController.commandPosition(70 + 12, 70, PI/2.0);
-//  closedLoopController.commandPosition(200 + 12, 0, 0);
+//  closedLoopController.commandPosition(30 + 12, 30, PI/2.0);
+  closedLoopController.commandPosition(30 + 12, 0, 0);
 //  closedLoopController.commandPosition(12, 0, PI/2.0);
 //  currController = &closedLoopController;
+//    closedLoopController.commandPosition(0, 0, 0);
+    currController = &closedLoopController;
 }
 
  int ms_since_print = 0;
@@ -85,10 +87,27 @@ void loop()
   static PiToArduinoPacket recv_packet;
   static ArduinoToPiPacket send_packet;
   static unsigned long curr_time;
+  static int curIndex = 0;
 
- 
+//  if (odometryInterface.x < 70.00)
+//  {
+//    closedLoopController.commandPosition(odometryInterface.x + 30, 0, 0);
+//  } else {
+//    closedLoopController.commandPosition(odometryInterface.x + 30, 0, 0);
+//  }
+  closedLoopController.commandPosition(odometryInterface.x + 20 + 12, odometryInterface.y + 20, odometryInterface.theta + PI/12);
   curr_time = millis();
-
+  while (Serial.available())
+  {
+    wheelInterface.commandPWMs(0, 0);
+    currController = NULL;
+  }
+//  if(!closedLoopController.finished) {
+//    closedLoopController.commandPosition(circlePoints[curIndex][0], circlePoints[curIndex][1], circlePoints[curIndex][2]);
+//    currController = &closedLoopController;
+//  } else {
+//    curIndex++;
+//  }
 //  float radius = 55.0;
 //  
 //  float theta = 2.0 * PI * (curr_time / 6000.0);
