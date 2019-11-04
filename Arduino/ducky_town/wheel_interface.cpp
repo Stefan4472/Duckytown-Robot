@@ -54,12 +54,14 @@ int WheelInterface::boundRightPWM(int pwm)
 
 int WheelInterface::leftPWMFromSpeed(float cmPerSec)
 {
-  return (6.24 * cmPerSec + 83.16) * 0.986;
+//  return 6.24 * cmPerSec + 83.16;
+//  return (int) (5.98 * cmPerSec + 83.16);
+return (int) (6.02 * cmPerSec + 83.16);
 }
 
 int WheelInterface::rightPWMFromSpeed(float cmPerSec)  // TODO: DOES THIS WORK FOR NEGATIVE VALUES?
 {
-  return 6.13 * cmPerSec + 83.2;
+  return (int) (6.13 * cmPerSec + 83.2);
 }
 
 float WheelInterface::leftSpeedFromPWM(uint16_t pwm)
@@ -69,7 +71,9 @@ float WheelInterface::leftSpeedFromPWM(uint16_t pwm)
   {
     return 0.0;
   }
-  return 0.160 * pwm - 13.33;
+//  return ((float) pwm - 83.16) / 5.98;
+return ((float) pwm - 83.16) / 6.02;
+//  return 0.160 * pwm - 13.33;
 }
 
 float WheelInterface::rightSpeedFromPWM(uint16_t pwm)
@@ -79,7 +83,8 @@ float WheelInterface::rightSpeedFromPWM(uint16_t pwm)
   {
     return 0.0;
   }
-  return 0.163 * pwm - 13.56;
+  return ((float) pwm - 83.2) / 6.13;
+//  return 0.163 * pwm - 13.56;
 }
 
 bool WheelInterface::init()

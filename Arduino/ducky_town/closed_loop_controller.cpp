@@ -6,60 +6,13 @@
 //#define K_ROT 28.0
 //#define B_ROT 2.0
 
-#define K_TRANS 0.40
-#define B_TRANS 0.80
-#define K_ROT 8.0
-#define B_ROT 4.5
-
-// TEMPORARY
-#define K 5.0
-#define B 5.0
+#define K_TRANS 0.05
+#define B_TRANS 0.1
+#define K_ROT 2.8
+#define B_ROT 1.8
 
 void ClosedLoopController::update(OdometryInterface* odometry, WheelInterface* wheels)
 {
-  /*
-  Serial.println();
-  Serial.println("Target " + String(targetX) + ", " + String(targetY) + ", " + String(targetTheta));
-  // Calculate yoke point
-  float yoke_x = odometry->x + CHASSIS_LENGTH_CM * cos(odometry->theta);
-  float yoke_y = odometry->y + CHASSIS_LENGTH_CM * sin(odometry->theta);
-  float yoke_t = odometry->theta;
-  Serial.println("Yoke " + String(yoke_x) + ", " + String(yoke_y) + ", " + String(yoke_t));
-
-  // Calculate yoke velocities
-  float yoke_dx = odometry->dX + CHASSIS_LENGTH_CM * -sin(odometry->theta) * odometry->dTheta;
-  float yoke_dy = odometry->dY + CHASSIS_LENGTH_CM * cos(odometry->theta) * odometry->dTheta;
-  float yoke_dt = odometry->dTheta;
-  Serial.println("DYoke " + String(yoke_dx) + ", " + String(yoke_dy) + ", " + String(yoke_dt));
-
-  // Proportional error (position)
-  float p_err_x = yoke_x - targetX;
-  float p_err_y = yoke_y - targetY;
-  Serial.println("pError " + String(p_err_x) + ", " + String(p_err_y));
-  
-  // Derivative error (velocity)
-  float d_err_x = yoke_dx;
-  float d_err_y = yoke_dy;
-  Serial.println("dError " + String(d_err_x) + ", " + String(d_err_y));
-  
-  // Calculate total force, Fpd
-  float fpd_x = -K * p_err_x - B * d_err_x;
-  float fpd_y = -K * p_err_y - B * d_err_y;
-  Serial.println("fPD " + String(fpd_x) + ", " + String(fpd_y));
-  
-  // Calculate translation force, Ftrans = <Fpd, yoke_dx>
-  float ftrans = fpd_x * yoke_dx + fpd_y * yoke_dy;
-  Serial.println("fTrans " + String(ftrans));
-  
-  // Calculate Moment of rotation, Mrot = a1b2 - a2b1
-  float mrot_z = CHASSIS_LENGTH_CM * fpd_y;
-  
-  Serial.println("Left, right should be " + String(ftrans - mrot_z) + ", " + String(ftrans + mrot_z));
-  wheels->commandPWMs(ftrans - mrot_z, ftrans + mrot_z);
-  // Calculate elapsed time
-  //  elapsedTime = millis() - prevTime;
-  //  prevTime = millis();
-  */
   if (!finished)
   { 
     float yoke_x = odometry->x + CHASSIS_LENGTH_CM * cos(odometry->theta);
@@ -101,7 +54,10 @@ void ClosedLoopController::update(OdometryInterface* odometry, WheelInterface* w
 //    else 
 //    {
       finished = false;
-      wheels->commandPWMs(wheels->currLPWM + (trans_ddot - theta_ddot) * 0.97, wheels->currRPWM + trans_ddot + theta_ddot);
+
+      float curr_left_vel = wheels->leftSpeedFromPWM(wheels->currLPWM);
+      float curr_right_vel = wheels->rightSpeedFromPWM(wheels->currRPWM);
+      wheels->commandSpeeds(curr_left_vel + trans_ddot - theta_ddot, curr_right_vel + trans_ddot + theta_ddot);
 //    }
   }
 }

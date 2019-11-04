@@ -8,7 +8,8 @@
 
 class WheelInterface
 {
-  private:
+//  private:
+  public:
     // MotorShield
     DualMC33926MotorShield motorShield;
 
@@ -29,7 +30,7 @@ class WheelInterface
     float leftSpeedFromPWM(uint16_t pwm);
     float rightSpeedFromPWM(uint16_t pwm);
     
-  public:
+//  public:
     int currLPWM, currRPWM;
     bool init();
     // Sets raw PWM inputs to left and right motors
