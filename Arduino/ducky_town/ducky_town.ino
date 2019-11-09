@@ -31,20 +31,12 @@ void setup()
   lastLoop = millis();
 }
 
- int ms_since_print = 0;
- unsigned long start_time;
-
-void onClosedLoopConverged()
-{
-  Serial.println("ClosedLoopConverged");
-  Serial.println("x " + String(odometryInterface.x) + " y " + String(odometryInterface.y) + " t " + String(odometryInterface.theta));
-}
-
 void loop()
 {
   static PiToArduinoPacket recv_packet;
   static ArduinoToPiPacket send_packet;
   static unsigned long curr_time;
+  static int ms_since_print = 0;
 
   // Process any queued packets.
   while (serialInterface.getNextPacket(&recv_packet))
@@ -67,6 +59,9 @@ void loop()
   {
     currController->update(&odometryInterface, &wheelInterface);
   }
+
+  // Check distance and limit speed, if necessary
+  proximitySensor.runCollisionAvoidance(odometryInterface.dX, &wheelInterface);
 
   // Print readings once every 1000 ms.
   ms_since_print += curr_time - lastLoop;

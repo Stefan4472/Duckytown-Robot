@@ -55,8 +55,8 @@ void ClosedLoopController::update(OdometryInterface* odometry, WheelInterface* w
 //    {
       finished = false;
 
-      float curr_left_vel = wheels->leftSpeedFromPWM(wheels->currLPWM);
-      float curr_right_vel = wheels->rightSpeedFromPWM(wheels->currRPWM);
+      float curr_left_vel = wheels->leftSpeedFromPWM(wheels->currLeftPWM);
+      float curr_right_vel = wheels->rightSpeedFromPWM(wheels->currRightPWM);
       wheels->commandSpeeds(curr_left_vel + trans_ddot - theta_ddot, curr_right_vel + trans_ddot + theta_ddot);
 //    }
   }
