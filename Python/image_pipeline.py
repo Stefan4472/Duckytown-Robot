@@ -1,8 +1,8 @@
 import time
 import numpy as np
-from PIL import Image
+# from PIL import Image
 import pygame
-from picam_interface import Camera
+# from picam_interface import Camera
 
 def process_img(m):
 	yellow = (254, 240, 82)
@@ -33,26 +33,34 @@ def process_img(m):
 				 abs(m[i][j][2] - white[2]) < white_tolerance:
 				m[i][j] = [0, 0, 255]
 
+IMAGE_RESOLUTION = (320, 240)  # TODO: IS THIS COLS * ROWS?
 if __name__ == '__main__':
 	# Code to display numpy array using Pygame: https://stackoverflow.com/a/41171153
 	# Also, this may be helpful: https://stackoverflow.com/a/49593410
 	pygame.init()
-	display = pygame.display.set_mode((350, 350))
-	x = np.arange(0, 300)
-	y = np.arange(0, 300)
-	X, Y = np.meshgrid(x, y)
-	Z = X + Y
-	Z = 255*Z/Z.max()
-	surf = pygame.surfarray.make_surface(Z)
+	display = pygame.display.set_mode(IMAGE_RESOLUTION)
 
+	# TODO: HOW TO COPY 3-CHANNEL IMAGES INTO A SINGLE CHANNEL?
+	img = np.full(shape=(320, 480, 3), fill_value=255)
+	
 	running = True
 
+	# HOW TO DRAW THE IMAGE? THIS MAY BE HELPFUL: https://github.com/amremam2004/py2cairo/blob/2f1f3788fa2d9b693c77645edc44f35e7073aadd/test/pygame-test1.py
+	# Also: https://www.pygame.org/docs/ref/surfarray.html
+	# Also: https://www.pygame.org/docs/tut/SurfarrayIntro.html
 	while running:
-			for event in pygame.event.get():
-					if event.type == pygame.QUIT:
-							running = False
-			display.blit(surf, (0, 0))
-			pygame.display.update()
+		for event in pygame.event.get():
+			if event.type == pygame.QUIT:
+					running = False
+		# Draw to the screen.
+		pixel_array = pygame.PixelArray(display)
+		pixel_array[:, :] = (255, 255, 255)
+
+		# print (pixel_array.shape)
+		# display.blit(pixel_array.surface, (0, 0))
+		# Update screen.
+		pygame.display.update()
+
 	pygame.quit()
 
 	# with picamera.PiCamera() as camera:

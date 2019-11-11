@@ -54,7 +54,7 @@ class Camera:
     # Reference:
     # https://picamera.readthedocs.io/en/release-1.10/api_camera.html#picamera.camera.PiCamera.capture_continuous
     # https://picamera.readthedocs.io/en/release-1.10/api_array.html#pirgbarray
-    self.camera.start_preview()
+    # self.camera.start_preview()
     
     # Infinite capture loop.
     for frame in self.camera.capture_continuous(self.raw_capture, format="rgb", use_video_port=True):
