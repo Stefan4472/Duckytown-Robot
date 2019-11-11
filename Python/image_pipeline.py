@@ -41,7 +41,8 @@ if __name__ == '__main__':
 	display = pygame.display.set_mode(IMAGE_RESOLUTION)
 
 	# TODO: HOW TO COPY 3-CHANNEL IMAGES INTO A SINGLE CHANNEL?
-	img = np.full(shape=(320, 480, 3), fill_value=255)
+	img = np.zeros(shape=(320, 480, 3), dtype='uint8')
+	img[:, :, 0].fill(255)
 	
 	running = True
 
@@ -54,8 +55,12 @@ if __name__ == '__main__':
 					running = False
 		# Draw to the screen.
 		pixel_array = pygame.PixelArray(display)
-		pixel_array[:, :] = (255, 255, 255)
+		# pixel_array[:, :] = (255, 255, 255)
 
+		# Copy the image into the surface (slow :(... Need to merge three channels into one)	
+		for i in range(IMAGE_RESOLUTION[0]):
+			for j in range(IMAGE_RESOLUTION[1]):
+				pixel_array[i, j] = (img[i, j, 0], img[i, j, 1], img[i, j, 2])
 		# print (pixel_array.shape)
 		# display.blit(pixel_array.surface, (0, 0))
 		# Update screen.
