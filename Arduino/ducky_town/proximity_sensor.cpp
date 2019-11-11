@@ -14,7 +14,7 @@ void ProximitySensor::init(int pin)
 
 float ProximitySensor::getDistCm()
 {
-  // TODO: ARE THESE STATEMENTS NECESSARY?
+  // Send the pulse
   pinMode(pin, OUTPUT);
   digitalWrite(pin, LOW);
   delayMicroseconds(2);
@@ -23,8 +23,11 @@ float ProximitySensor::getDistCm()
   digitalWrite(pin, LOW);
   pinMode(pin, INPUT);
 
+  float pulse_time = (float) pulseIn(pin, HIGH);
+//  Serial.println(String(pulse_time) + ", " + String(pulse_time / MICROSEC_PER_CM / 2.0));
+  
   // Calculate distance in centimeters based on pulse time 
-  return pulseIn(pin, HIGH) / MICROSEC_PER_CM / 2.0;
+  return pulse_time / MICROSEC_PER_CM / 2.0;
 }
 
 // TODO: MORE SOPHISTICATED
@@ -35,6 +38,7 @@ void ProximitySensor::runCollisionAvoidance(float dx, WheelInterface* wheels)
   if (fwd_dist < minFollowDistanceCm)
   {
     wheels->startSpeedOverride(0);
+//    Serial.println("Overriding");
   }
   else if (!wheels->overrideOn)
   {

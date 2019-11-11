@@ -16,6 +16,10 @@ Activate the environment:
 Install required packages:
 ```
 pip install pySerial
+pip install numpy
+pip install pycamera
+pip install pillow
+pip install pygame==2.0.0.dev6  # THIS IS FOR PYTHON3.8. THE CURRENT PYGAME IS NOT SUPPORTED 
 ```
 Deactivate the environment:
 ```
