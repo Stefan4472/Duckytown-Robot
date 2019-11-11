@@ -1,8 +1,9 @@
 import time
 import numpy as np
-# from PIL import Image
+from PIL import Image, ImageTk
 import pygame
 from picam_interface import Camera
+import tkinter as tk
 
 def process_img(m):
 	yellow = (254, 240, 82)
@@ -33,8 +34,28 @@ def process_img(m):
 				 abs(m[i][j][2] - white[2]) < white_tolerance:
 				m[i][j] = [0, 0, 255]
 
-IMAGE_RESOLUTION = (320, 240)  # TODO: MAKE RES_W, RES_H INSTEAD
+def update_display():
+	print('Updating display')
+	if camera.frame_ready:
+		print('Got next frame')
+		camera.get_frame(pixel_data)
+		tk_image = ImageTk.PhotoImage(image=pixel_data, mode='RGB')
+		tk_canvas.create_image(0, 0, anchor="nw", image=tk_image)
+		#tk_canvas.pack()
+	tk_canvas.after(1000, update_display)
+
+IMAGE_RESOLUTION = (320, 240)  # TODO: MAKE RES_W, RES_H INSTEAD		
+camera = Camera()
+pixel_data = np.zeros(shape=(IMAGE_RESOLUTION[1], IMAGE_RESOLUTION[0], 3), dtype='uint8')
+tk_root = tk.Tk()
+tk_image = ImageTk.PhotoImage(image=Image.fromarray(pixel_data))
+tk_canvas = tk.Canvas(tk_root, width=IMAGE_RESOLUTION[0], height=IMAGE_RESOLUTION[1])
+
 if __name__ == '__main__':
+	tk_canvas.pack()
+	update_display()
+	tk_root.mainloop()
+	'''
 	# Code to display numpy array using Pygame: https://stackoverflow.com/a/41171153
 	# Also, this may be helpful: https://stackoverflow.com/a/49593410
 	pygame.init()
@@ -75,3 +96,4 @@ if __name__ == '__main__':
 		pygame.display.update()
 
 	pygame.quit()
+	'''

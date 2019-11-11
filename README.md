@@ -20,6 +20,7 @@ pip install numpy
 pip install pycamera
 pip install pillow
 pip install pygame==2.0.0.dev6  # THIS IS FOR PYTHON3.8. THE CURRENT PYGAME IS NOT SUPPORTED 
+sudo apt-get install python3-pil python3-pil.imagetk
 ```
 Deactivate the environment:
 ```

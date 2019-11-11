@@ -60,7 +60,7 @@ class Camera:
     raw_capture = PiRGBArray(self.camera, size=self.camera.resolution)
     # Infinite capture loop.
     for frame in self.camera.capture_continuous(raw_capture, format="rgb", use_video_port=True):
-      print('Got next frame at ms {}'.format(time.time()))
+      #print('Got next frame at ms {}'.format(time.time()))
       # Copy image data to 'last_frame'
       np.copyto(self._last_frame, frame.array)
       # Clear the stream in preparation for the next frame.
