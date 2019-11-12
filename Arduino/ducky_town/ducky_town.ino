@@ -6,6 +6,7 @@
 #include "icontroller.h"
 #include "open_loop_controller.h"
 #include "closed_loop_controller.h"
+#include "proximity_sensor.h"
 
 SerialInterface serialInterface;
 WheelInterface wheelInterface;
@@ -13,9 +14,11 @@ OdometryInterface odometryInterface;
 OpenLoopController openLoopController;
 ClosedLoopController closedLoopController;
 IController* currController;
+ProximitySensor proximitySensor;
 
 // TODO: RUN AT A HIGHER BAUD RATE
-const long BAUD_RATE = 9600;
+#define BAUD_RATE 9600
+#define PING_PIN 7
 
 unsigned long lastLoop;
 
@@ -24,86 +27,51 @@ void setup()
   serialInterface.init(BAUD_RATE);
   odometryInterface.init();
   wheelInterface.init();
+  proximitySensor.init(PING_PIN);
   lastLoop = millis();
 }
 
- int ms_since_print = 0;
- bool test_started = false;
- bool test_finished = false;
- unsigned long start_time;
- int currIndex = 0;
- int totalIndexes = 4;
- float circlePoints[12][3] = {
-    {9,2.4,PI/6.0},
-    {16,9,2*PI/6.0},
-    {18,18,3*PI/6.0},
-    {16,27,4*PI/6.0},
-    {9,33.6,5*PI/6.0},
-    {0,36,PI},
-    {-9,33.6,7*PI/6.0},
-    {-16,27,8*PI/6.0},
-    {-18,18,9*PI/6.0},
-    {-16,9,10*PI/6.0},
-    {-9,2.4,11*PI/6.0},
-    {0,0,0}
-  };
-
-
-void onClosedLoopConverged()
-{
-  Serial.println("ClosedLoopConverged");
-  Serial.println("x " + String(odometryInterface.x) + " y " + String(odometryInterface.y) + " t " + String(odometryInterface.theta));
-
-}
-
-bool converged = false;
 void loop()
 {
   static PiToArduinoPacket recv_packet;
   static ArduinoToPiPacket send_packet;
   static unsigned long curr_time;
-  static int curIndex = 0;
+  static int ms_since_print = 0;
 
-//  if (odometryInterface.x < 70.00)
-//  {
-//    closedLoopController.commandPosition(odometryInterface.x + 30, 0, 0);
-//  } else {
-//    closedLoopController.commandPosition(112, 0, 0);
-//  }
-  
+  // Process any queued packets.
+  while (serialInterface.getNextPacket(&recv_packet))
+  {
+    Serial.println("Got another packet");
+    // Handle the request and send a response if requested.
+    if (handleRequest(&recv_packet, &send_packet))
+    {
+      serialInterface.sendPacket(&send_packet);
+    }
+  }
+
   curr_time = millis();
 
+  // Update odometry
+  odometryInterface.update();
 
- // Process any queued packets.
- while (serialInterface.getNextPacket(&recv_packet))
- {
-   Serial.println("Got another packet");
-   // Handle the request and send a response if requested.
-   if (handleRequest(&recv_packet, &send_packet))
-   {
-     serialInterface.sendPacket(&send_packet);
-   }
- }
+  // Update controller, if one is set.
+  if (currController && !currController->finished)
+  {
+    currController->update(&odometryInterface, &wheelInterface);
+  }
 
- // Update odometry
- odometryInterface.update();
+  // Check distance and limit speed, if necessary
+  proximitySensor.runCollisionAvoidance(odometryInterface.dX, &wheelInterface);
 
- // Update controller, if one is set.
- if (currController && !currController->finished)
- {
-   currController->update(&odometryInterface, &wheelInterface);
- }
-
- // Print readings once every 1000 ms.
- ms_since_print += curr_time - lastLoop;
- if (ms_since_print > 250)
- {
-   long left, right;
-   odometryInterface.getTickCounts(&left, &right);
-   Serial.println("Left " + String(left) + ", Right " + String(right));
-  
-   ms_since_print = 0;
- }
+  // Print readings once every 1000 ms.
+  ms_since_print += curr_time - lastLoop;
+  if (ms_since_print > 250)
+  {
+    long left, right;
+    float dist = proximitySensor.getDistCm();
+    Serial.println("Proximity sensor reads " + String(dist) + " cm");
+    ms_since_print = 0;
+  }
 
   lastLoop = curr_time;
 }

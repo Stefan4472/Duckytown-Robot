@@ -8,15 +8,15 @@
 
 class WheelInterface
 {
-//  private:
-  public:
+  private:
     // MotorShield
     DualMC33926MotorShield motorShield;
 
+  public:
     // PWM limits (based on speed limit and motor limits).
     // Initialize to motor limits.
-    int16_t maxRightPWM = MAX_PWM, maxLeftPWM = MAX_PWM;
-    int16_t minRightPWM = MIN_PWM, minLeftPWM = MIN_PWM;
+    int maxRightPWM = MAX_PWM, maxLeftPWM = MAX_PWM;
+    int minRightPWM = MIN_PWM, minLeftPWM = MIN_PWM;
     
     // Bounds PWM to (max, min) on left and right
     int boundLeftPWM(int pwm);
@@ -27,17 +27,27 @@ class WheelInterface
     // Convert desired speed to PWM for right wheel
     int rightPWMFromSpeed(float cmPerSec);
     
-    float leftSpeedFromPWM(uint16_t pwm);
-    float rightSpeedFromPWM(uint16_t pwm);
+    float leftSpeedFromPWM(int pwm);
+    float rightSpeedFromPWM(int pwm);
     
-//  public:
-    int currLPWM, currRPWM;
+  public:
+    int currLeftPWM, currRightPWM;  // TODO: PROVIDE CURRLEFTSPEED, CURRRIGHTSPEED INSTEAD(?)
+    int lastCommandedLeftPWM, lastCommandedRightPWM;
+    bool overrideOn = false;
+
     bool init();
     // Sets raw PWM inputs to left and right motors
     bool commandPWMs(int leftPWM, int rightPWM);
+
     bool commandStraightSpeed(float cmPerSec);
+    
     bool commandSpeeds(float leftCmPerSec, float rightCmPerSec);
+    
     void setSpeedLimit(float cmPerSec);
+
+    void startSpeedOverride(float cmPerSec);
+    
+    void stopSpeedOverride();
 };
 
 
