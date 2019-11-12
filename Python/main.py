@@ -1,16 +1,25 @@
+import time
+import numpy as np
 from arduino_interface import ArduinoInterface
 from driver import Driver, TurnType
 from picam_interface import Camera
-import time 
 
-arduino_interface = ArduinoInterface('/dev/ttyACM0', 9600, timeout=1.0)
-camera = Camera()
-driver = Driver()
-# navigator = Navigator()
+IMAGE_WIDTH = 240
+IMAGE_HEIGHT = 320
 
-time.sleep(2)
-driver.instruct(TurnType.STRAIGHT)
-while True:
-  if camera.frame_ready:
-    ... get_frame()
-    ... driver.update(next_img)
+if __name__ == '__main__':
+  arduino_interface = ArduinoInterface('/dev/ttyACM0', 9600, timeout=1.0)
+  camera = Camera()
+  driver = Driver(arduino_interface)
+  # navigator = Navigator()
+
+  time.sleep(2)
+  driver.set_speed_limit(10.0)
+  driver.instruct(TurnType.STRAIGHT)
+  pixel_data = np.empty(shape=(IMAGE_HEIGHT, IMAGE_WIDTH, 3), dtype='uint8')
+
+  while True:
+    if camera.frame_ready:
+      print('Got next frame')
+      camera.get_frame(pixel_data)
+      driver.update(pixel_data)

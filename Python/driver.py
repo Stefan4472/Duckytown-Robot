@@ -30,6 +30,7 @@ class Driver:
     # Do nothing if stopped. Await instructions.
     if self.state == DriveState.STOPPED:
       return False
+      
     # TODO: IMAGE PROCESSING. Switch to lane-following once lanes are seen
     return True
 
@@ -39,13 +40,13 @@ class Driver:
 
     # Apply openloop command based on the turnType.
     if turn == TurnType.LEFT:
-      self.arduino.command_openloop_lcurve(\
+      self.car.command_openloop_lcurve(\
         self.speed_limit, LEFT_TURN_RADIUS, PI / 2.0)
     elif turn == TurnType.RIGHT:
-      self.arduino.command_openloop_rcurve(\
+      self.car.command_openloop_rcurve(\
         self.speed_limit, RIGHT_TURN_RADIUS, PI / 2.0)
     elif turn == TurnType.STRAIGHT:
-      self.arduino.command_openloop_straight(self.speed_limit)
+      self.car.command_openloop_straight(self.speed_limit)
     else:
       raise ValueError('Invalid turn (must be of type TurnType)')
 
