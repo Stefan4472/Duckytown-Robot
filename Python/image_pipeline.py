@@ -5,35 +5,7 @@ from PIL import Image, ImageTk
 # from picam_interface import Camera
 import tkinter as tk
 
-def process_img(m):	# TODO: SHOULD USE SOME STATE INFORMATION IN ORDER TO DYNAMICALLY CHANGE THE REGION OF INTEREST
-	yellow = (254, 240, 82)
-	red = (255, 73, 109)
-	white = (254, 255, 253)
-
-	yellow_tolerance = 25
-	red_tolerance = 30
-	white_tolerance = 12
-
-	start_row = 0
-	rows_checked = 240
-	start_col = 0
-	cols_checked = 320
-
-	for i in range(start_row, start_row + rows_checked):
-		for j in range(start_col, start_col + cols_checked):
-			if abs(m[i][j][0] - yellow[0]) < yellow_tolerance and \
-				 abs(m[i][j][1] - yellow[1]) < yellow_tolerance and \
-				 abs(m[i][j][2] - yellow[2]) < yellow_tolerance:
-				m[i][j] = [255, 0, 0]
-			elif abs(m[i][j][0] - red[0]) < red_tolerance and \
-				 abs(m[i][j][1] - red[1]) < red_tolerance and \
-				 abs(m[i][j][2] - red[2]) < red_tolerance:
-				m[i][j] = [0, 255, 0]
-			elif abs(m[i][j][0] - white[0]) < white_tolerance and \
-				 abs(m[i][j][1] - white[1]) < white_tolerance and \
-				 abs(m[i][j][2] - white[2]) < white_tolerance:
-				m[i][j] = [0, 0, 255]
-
+# TODO: CAPTURE A SINGLE IMAGE AND DISPLAY
 def update_display():
 	print('Updating display')
 	
