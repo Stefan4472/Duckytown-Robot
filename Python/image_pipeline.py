@@ -1,11 +1,11 @@
 import time
 import numpy as np
 from PIL import Image, ImageTk
-import pygame
-from picam_interface import Camera
+# import pygame
+# from picam_interface import Camera
 import tkinter as tk
 
-def process_img(m):
+def process_img(m):	# TODO: SHOULD USE SOME STATE INFORMATION IN ORDER TO DYNAMICALLY CHANGE THE REGION OF INTEREST
 	yellow = (254, 240, 82)
 	red = (255, 73, 109)
 	white = (254, 255, 253)
@@ -36,20 +36,26 @@ def process_img(m):
 
 def update_display():
 	print('Updating display')
+	
 	if camera.frame_ready:
 		print('Got next frame')
+		 # Copy frame to 'pixel_data' buffer
 		camera.get_frame(pixel_data)
-		tk_image = ImageTk.PhotoImage(image=pixel_data, mode='RGB')
-		tk_canvas.create_image(0, 0, anchor="nw", image=tk_image)
-		#tk_canvas.pack()
-	tk_canvas.after(1000, update_display)
+		# Create Tkinter image from numpy image frame 
+		tk_image = ImageTk.PhotoImage(image=Image.fromarray(pixel_data))
+		# Update the canvas image
+		tk_canvas.itemconfig(tk_canvas_img, image=tk_image)
+	
+	# Call 'update_display()' every x milliseconds
+	tk_root.after(1000, update_display)
 
-IMAGE_RESOLUTION = (320, 240)  # TODO: MAKE RES_W, RES_H INSTEAD		
-camera = Camera()
+IMAGE_RESOLUTION = (320, 240)	# TODO: MAKE RES_W, RES_H INSTEAD		
+# camera = Camera()
 pixel_data = np.zeros(shape=(IMAGE_RESOLUTION[1], IMAGE_RESOLUTION[0], 3), dtype='uint8')
 tk_root = tk.Tk()
-tk_image = ImageTk.PhotoImage(image=Image.fromarray(pixel_data))
+tk_photo_img = ImageTk.PhotoImage(image=Image.fromarray(pixel_data))
 tk_canvas = tk.Canvas(tk_root, width=IMAGE_RESOLUTION[0], height=IMAGE_RESOLUTION[1])
+tk_canvas_img = tk_canvas.create_image(0, 0, anchor='nw', image=tk_photo_img)
 
 if __name__ == '__main__':
 	tk_canvas.pack()

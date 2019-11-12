@@ -23,23 +23,28 @@ class Camera:
     # self.running = False
     # Sleep while the camera initializes
     time.sleep(0.1)
-    # The capture thread, which will run '_thread_capture_async()'
-    self.capture_thread = Thread(target=self._thread_capture_async, args=())
+    # The capture thread, which will run '_thread_capture_async()'.
+    # The thread is created when 'start()' is called.
+    self.capture_thread = None
 
-    # Start!
-    self.capture_thread.start()    
+    # # Start!
+    # self.capture_thread.start()    
 
-  # # TODO: SUPPORT START/STOP
-  # # THIS FUNCTION SHOULD CHECK IF IT'S ALREADY RUNNING
-  # def start_capture(self):
-  #   self.running = True
-  #   self.capture_thread.start()
-  #   return 
+  # Starts continuous capture. Creates and starts the capture thread.
+  def start(self):
+    if not self.running:
+      self.capture_thread = Thread(target=self._thread_capture_async, args=())
+      self.capture_thread.start()
+      self.running = True
+    return 
 
-  # def stop_capture(self):
-  #   self.running = False 
-  #   self.capture_thread.stop()
-  #   return
+  # Stops continuous capture. Stops and destroys the capture thread.
+  def stop(self):
+    if self.running:
+      self.running = False 
+      self.capture_thread.stop()
+      self.capture_thread = None
+    return
 
   # Gets the most recent frame, copying it to the provided 
   # numpy array. The array must be the proper resolution!
