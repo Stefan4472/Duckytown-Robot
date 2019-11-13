@@ -20,7 +20,7 @@ class Camera:
     self.frame_ready = False
     self._last_frame = np.empty((resolution[1], resolution[0], 3), dtype='uint8')
     # Whether the camera is currently capturing images.
-    # self.running = False
+    self.running = False
     # Sleep while the camera initializes
     time.sleep(0.1)
     # The capture thread, which will run '_thread_capture_async()'.

@@ -34,37 +34,32 @@ int WheelInterface::boundRightPWM(int pwm)
 
 int WheelInterface::leftPWMFromSpeed(float cmPerSec)  // TODO: USE NEW TRACK PWMS
 {
-//  return 6.24 * cmPerSec + 83.16;
-//  return (int) (5.98 * cmPerSec + 83.16);
-return (int) (6.02 * cmPerSec + 83.16);
+  return (int) (cmPerSec + 14.91) / 0.166;
 }
 
 int WheelInterface::rightPWMFromSpeed(float cmPerSec)  // TODO: DOES THIS WORK FOR NEGATIVE VALUES?
 {
-  return (int) (6.13 * cmPerSec + 83.2);
+  return (int) (cmPerSec + 14.85) / 0.168;
 }
 
 float WheelInterface::leftSpeedFromPWM(int pwm)
 {
   // Return 0 if pwm is too low to move the robot.
-  if (abs(pwm) < 85)
+  if (abs(pwm) < 90)
   {
     return 0.0;
   }
-//  return ((float) pwm - 83.16) / 5.98;
-return ((float) pwm - 83.16) / 6.02;
-//  return 0.160 * pwm - 13.33;
+  return 0.166 * pwm - 14.91;
 }
 
 float WheelInterface::rightSpeedFromPWM(int pwm)
 {
   // Return 0 if pwm is too low to move the robot.
-  if (abs(pwm) < 85)
+  if (abs(pwm) < 89)
   {
     return 0.0;
   }
-  return ((float) pwm - 83.2) / 6.13;
-//  return 0.163 * pwm - 13.56;
+  return 0.168 * pwm - 14.85;
 }
 
 bool WheelInterface::init()
@@ -91,6 +86,7 @@ bool WheelInterface::commandPWMs(int leftPWM, int rightPWM)
   {
     this->motorShield.setM1Speed(lastCommandedLeftPWM);
     this->motorShield.setM2Speed(lastCommandedRightPWM);
+    Serial.println("Commanding PWMs " + String(lastCommandedLeftPWM) + ", " + String(lastCommandedRightPWM));
 
     currLeftPWM = lastCommandedLeftPWM;
     currRightPWM = lastCommandedRightPWM;
@@ -106,6 +102,7 @@ bool WheelInterface::commandStraightSpeed(float cmPerSec)
 
 bool WheelInterface::commandSpeeds(float leftCmPerSec, float rightCmPerSec)
 {
+  Serial.println("Commanding speeds " + String(leftCmPerSec) + ", " + String(rightCmPerSec));
   return commandPWMs(leftPWMFromSpeed(leftCmPerSec), rightPWMFromSpeed(rightCmPerSec));
 }
 

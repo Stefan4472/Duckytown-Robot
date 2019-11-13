@@ -22,7 +22,7 @@ void right_wheel_isr() {
     uint8_t pin3 = (PIND & 0b1000) >> 2;
 
     right_enc_val = right_enc_val | (pin3 | pin11); // puts current values for pins 3 and 11 into enc_val
-    odometrySingleton->rightCount += LOOKUP_TABLE[right_enc_val & 0b1111];
+    odometrySingleton->rightCount -= LOOKUP_TABLE[right_enc_val & 0b1111];
 }
 
 // ISR for the left wheel QTR sensors.
@@ -35,7 +35,7 @@ void left_wheel_isr() {
     uint8_t pin2 = (PIND & 0b100) >> 1;
 
     left_enc_val = left_enc_val | (pin2| pin5); // puts current values for pins 5 and 2 into enc_val
-    odometrySingleton->leftCount += LOOKUP_TABLE[left_enc_val & 0b1111];
+    odometrySingleton->leftCount -= LOOKUP_TABLE[left_enc_val & 0b1111];
 }
 
 void OdometryInterface::init()

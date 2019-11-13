@@ -19,16 +19,28 @@ white_tolerance = 40
 #   # GREEN = 4
 
 ### SCALED FOR 640*480 IMAGE SIZE, RESCALE FOR FINAL
+'''
 sample_size = 3
 pixels_per_cm = 24
 center = 320
 yellow_width = 45
 lane_width = 477
+'''
+# Scaled for 320*240
+sample_size = 3
+pixels_per_cm = 12
+center = 160
+yellow_width = 22
+lane_width = 240
 
-start_row = 220
-rows_checked = 60
+# Convert pixel position to a real-world robot position (cm x, cm y)
+def get_position(pixel_row, pixel_col):
+    return (20.0, (160 - pixel_col) * 1.0 / pixels_per_cm)
+    
+start_row = 110
+rows_checked = 30
 start_col = 0
-cols_checked = 640
+cols_checked = 320
 
 # Takes a pixel (red, green, blue).
 # Attempts to classify the color. Returns 'Color' value.
@@ -109,49 +121,40 @@ def analyze_img(m):
           white_loc[2] = white_loc[0]
           white_loc[3] = cols_checked - 1 - j  # set column for rightmost white pixel
 
-  # get lane center
-  # lane_center = 0
-  # if found_y and found_w:
-  #     lane_center = (white_loc[1] + yellow_loc[1] + yellow_width) / 2
-  # elif found_y:
-  #     lane_center = yellow_loc[1] + yellow_width + (lane_width / 2)
-  # elif found_w:
-  #     lane_center = white_loc[1] - (lane_width / 2)
-  #
-  # y_off = (lane_center - center) / pixels_per_cm
-
-
   #TODO: get green center
 
   # all centers are just the leftmost pixel + (rightmost pixel - leftmost pixel) / 2
   green_center = [0, 0]
-  yellow_center = [yellow_loc[0], int(yellow_loc[1] + (yellow_loc[3] - yellow_loc[1]) / 2)]
-  stop_center = [red_loc[0], int(red_loc[1] + (red_loc[3] - red_loc[1]) / 2)]
-  white_center = [white_loc[0], int(white_loc[1] + (white_loc[3] - white_loc[1]) / 2)]
+  yellow_center = [yellow_loc[0], int(yellow_loc[1] + (yellow_loc[3] - yellow_loc[1]) / 2)] if found_y else None
+  stop_center = [red_loc[0], int(red_loc[1] + (red_loc[3] - red_loc[1]) / 2)] if found_r else None
+  white_center = [white_loc[0], int(white_loc[1] + (white_loc[3] - white_loc[1]) / 2)] if found_w else None
 
-  # print statements for testing
-  # print('Yellow Location:')
-  # print(yellow_loc)
-  # print('Yellow Center Pixel:')
-  # print(yellow_center)
-  # print('Red Location:')
-  # print(red_loc)
-  # print('Red Center Pixel:')
-  # print(stop_center)
-  # print('White Location:')
-  # print(white_loc)
-  # print('White Center Pixel:')
-  # print(white_center)
-
+  '''
+  print('Yellow Location:')
+  print(yellow_loc)
+  print('Yellow Center Pixel:')
+  print(yellow_center)
+  print('Red Location:')
+  print(red_loc)
+  print('Red Center Pixel:')
+  print(stop_center)
+  print('White Location:')
+  print(white_loc)
+  print('White Center Pixel:')
+  print(white_center)
+  '''
   # Return center of yellow lane, white lane, stop line (if found).
   # Each return is a tuple of (row, col) pixel coordinates
-  return yellow_center, white_center, stop_center, green_center
+  return yellow_center, white_center, stop_center #, green_center
 
 
 if __name__ == '__main__':
   # load image for testing
-  im = Image.open('640p2.jpg')
+  im = Image.open(r'/home/sam/Desktop/640p2.jpg')
   m = np.array(im)
   img = Image.fromarray(m, 'RGB')
+  y, w, s = analyze_img(m)
+  print(y)
+  print(w)
+  print(s)
   img.show()
-  analyze_img(m)

@@ -33,6 +33,10 @@ void setup()
 
 void loop()
 {
+//  return; // Kill command
+
+  
+
   static PiToArduinoPacket recv_packet;
   static ArduinoToPiPacket send_packet;
   static unsigned long curr_time;
@@ -61,17 +65,17 @@ void loop()
   }
 
   // Check distance and limit speed, if necessary
-  proximitySensor.runCollisionAvoidance(odometryInterface.dX, &wheelInterface);
+//  proximitySensor.runCollisionAvoidance(odometryInterface.dX, &wheelInterface);
 
   // Print readings once every 1000 ms.
-  ms_since_print += curr_time - lastLoop;
-  if (ms_since_print > 250)
-  {
-    long left, right;
-    float dist = proximitySensor.getDistCm();
-    Serial.println("Proximity sensor reads " + String(dist) + " cm");
-    ms_since_print = 0;
-  }
+//  ms_since_print += curr_time - lastLoop;
+//  if (ms_since_print > 250)
+//  {
+//    long left, right;
+//    float dist = proximitySensor.getDistCm();
+//    Serial.println("Proximity sensor reads " + String(dist) + " cm");
+//    ms_since_print = 0;
+//  }
 
   lastLoop = curr_time;
 }
@@ -149,10 +153,13 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
       currController = &openLoopController;
       return false; 
 
-    // SET_CLOSEDLOOP command
+    // SET_CLOSEDLOOP command  TODO: CURRENTLY RELATIVE
     case static_cast<int>(PiToArduinoCmd::SET_CLOSEDLOOP):
+      Serial.println("Running closed loop on " + String(request->arg1) + ", " + String(request->arg2) + ", " + String(request->arg3));
       //      Serial.println("Running left curve, target = " + String(request->arg3));
-      closedLoopController.commandPosition(request->arg1, request->arg2, request->arg3); //, &wheelInterface, &odometryInterface);
+      closedLoopController.commandPosition(12.0 + odometryInterface.x + request->arg1, 
+                                              odometryInterface.y + request->arg2, 
+                                              odometryInterface.theta + request->arg3);
       Serial.println("Turning on closed-loop control");
       currController = &closedLoopController;
       return false;
