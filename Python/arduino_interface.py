@@ -22,7 +22,7 @@ class ArduinoInterface:
         # Return values
         return (parsed_packet.arg1, parsed_packet.arg2, parsed_packet.arg3)
 
-    def set_motor_pwm(self, left, right):
+    def command_motor_pwms(self, left, right):
         self.seq_num += 1
         # Construct the packet
         send_packet = PiToArduinoPacket(PiToArduinoCmd.SET_MOTORS, \

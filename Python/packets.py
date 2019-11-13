@@ -34,7 +34,7 @@ class PiToArduinoPacket:
     args.append(int(1000 * self.arg1).to_bytes(4, 'big', signed=True))
     args.append(int(1000 * self.arg2).to_bytes(4, 'big', signed=True))
     args.append(int(1000 * self.arg3).to_bytes(4, 'big', signed=True))
-    args.append(int(self.seq_num).to_bytes(1, 'big'))
+    args.append(int(self.seq_num % 256).to_bytes(1, 'big'))
     return b''.join(args)
 
 class ArduinoToPiRsp(Enum):

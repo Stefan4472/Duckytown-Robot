@@ -48,6 +48,7 @@ class Driver:
       r_target = cv.get_position(lane_center[0], lane_center[1])
       print('Resolved to target r({})'.format(r_target))
       self.car.command_closedloop(r_target[0], r_target[1], 0.0)
+      print('Sent command')
     else:
       print('Couldn\'t see the lane')
     #elif found_y:

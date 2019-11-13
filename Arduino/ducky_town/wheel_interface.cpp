@@ -34,12 +34,12 @@ int WheelInterface::boundRightPWM(int pwm)
 
 int WheelInterface::leftPWMFromSpeed(float cmPerSec)  // TODO: USE NEW TRACK PWMS
 {
-  return (int) (cmPerSec + 14.91) / 0.166;
+  return (int) (89.81 + cmPerSec * 6.024);
 }
 
 int WheelInterface::rightPWMFromSpeed(float cmPerSec)  // TODO: DOES THIS WORK FOR NEGATIVE VALUES?
 {
-  return (int) (cmPerSec + 14.85) / 0.168;
+  return (int) (88.39 + cmPerSec * 5.952);
 }
 
 float WheelInterface::leftSpeedFromPWM(int pwm)

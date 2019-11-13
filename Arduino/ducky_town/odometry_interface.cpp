@@ -2,7 +2,7 @@
 #include "Arduino.h"
 
 // Number of ticks on the wheel.
-#define TICKS_PER_ROTATION 8.0
+#define TICKS_PER_ROTATION 16.0
 
 const uint8_t NUM_SENSORS = 4;
 uint16_t sensorValues[NUM_SENSORS];

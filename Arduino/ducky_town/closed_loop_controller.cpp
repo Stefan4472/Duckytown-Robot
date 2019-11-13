@@ -6,10 +6,10 @@
 //#define K_ROT 28.0
 //#define B_ROT 2.0
 
-#define K_TRANS 0.08//0.05
+#define K_TRANS 0.05
 #define B_TRANS 0.1
-#define K_ROT 2.8
-#define B_ROT 1.8
+#define K_ROT 0.4 // 1.6
+#define B_ROT 0.2 // 1.8
 
 void ClosedLoopController::update(OdometryInterface* odometry, WheelInterface* wheels)
 {

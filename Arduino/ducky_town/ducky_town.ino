@@ -17,10 +17,12 @@ IController* currController;
 ProximitySensor proximitySensor;
 
 // TODO: RUN AT A HIGHER BAUD RATE
-#define BAUD_RATE 9600
+#define BAUD_RATE 115200
 #define PING_PIN 7
 
 unsigned long lastLoop;
+unsigned long lastControllerUpdate;
+#define CONTROLLER_UPDATE_PERIOD_MS 100
 
 void setup()
 {
@@ -29,19 +31,16 @@ void setup()
   wheelInterface.init();
   proximitySensor.init(PING_PIN);
   lastLoop = millis();
+  lastControllerUpdate = lastLoop;
 }
 
 void loop()
 {
-//  return; // Kill command
-
-  
-
   static PiToArduinoPacket recv_packet;
   static ArduinoToPiPacket send_packet;
   static unsigned long curr_time;
   static int ms_since_print = 0;
-
+  
   // Process any queued packets.
   while (serialInterface.getNextPacket(&recv_packet))
   {
@@ -59,9 +58,10 @@ void loop()
   odometryInterface.update();
 
   // Update controller, if one is set.
-  if (currController && !currController->finished)
+  if (currController && !currController->finished && curr_time - lastControllerUpdate >= CONTROLLER_UPDATE_PERIOD_MS)
   {
     currController->update(&odometryInterface, &wheelInterface);
+    lastControllerUpdate = curr_time;
   }
 
   // Check distance and limit speed, if necessary
