@@ -13,6 +13,20 @@
 
 void ClosedLoopController::update(OdometryInterface* odometry, WheelInterface* wheels)
 {
+  /********************************************Theta-only*******************************************/
+  bool simpleControl = true;
+  if(simpleControl)
+  {
+    float theta_error = -targetTheta; // may be flipped
+    float theta_dot_error = odometry->dTheta;
+    float theta_ddot = -K_ROT * theta_error - B_ROT * theta_dot_error;
+    
+    wheels->commandSpeeds(this->speedLim - theta_ddot, this->speedLim + theta_ddot);
+  
+    return;
+  }
+  /**************************************************************************************************/
+  
   if (!finished)
   { 
     float yoke_x = odometry->x + CHASSIS_LENGTH_CM * cos(odometry->theta);
@@ -62,9 +76,10 @@ void ClosedLoopController::update(OdometryInterface* odometry, WheelInterface* w
   }
 }
 
-void ClosedLoopController::doATurn(float radius, float velocity, bool left, long startTime)
+void ClosedLoopController::setThetaControl(float speed_lim, float theta_rel)
 {
-  
+	this->targetTheta = theta_rel;
+	this->speedLim = speed_lim;
 }
 
 

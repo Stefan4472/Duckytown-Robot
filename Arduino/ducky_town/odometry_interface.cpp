@@ -10,7 +10,6 @@ const int8_t LOOKUP_TABLE[] = {0,0,0,-1,0,0,1,0,0,1,0,0,-1,0,0,0};
 
 // TODO: MAKE PART OF ODOMETRYINTERFACE CLASS
 OdometryInterface* odometrySingleton;
-
 // TODO: MOVE THESE STATIC DEFINITIONS BELOW THE CLASS DEFINITIONS
 // ISR for the right wheel QTR sensors.
 // Uses pins 3 and 11.

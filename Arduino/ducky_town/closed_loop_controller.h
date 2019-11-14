@@ -9,12 +9,13 @@ class ClosedLoopController : public IController
 {
   private:
     float targetX, targetY, targetTheta;
+    float speedLim;
 
   public:
     void update(OdometryInterface* odometry, WheelInterface* wheels);
     void commandPosition(float x, float y, float theta);
-    void doATurn(float radius, float velocity, bool left, long startTime);
     void (*onConvergedFcn)() = NULL;
+    void setThetaControl(float speed_lim, float theta_rel);
 };
 
 #endif
