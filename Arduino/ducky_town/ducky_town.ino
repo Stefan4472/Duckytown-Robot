@@ -159,8 +159,8 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
       Serial.println("Rel " + String(request->arg1) + ", " + String(request->arg2) + ", " + String(request->arg3));
       Serial.println("Abs " + String(12.0 + odometryInterface.x + request->arg1) + ", " + String(odometryInterface.y + request->arg2) + ", " + String(request->arg3));
       //      Serial.println("Running left curve, target = " + String(request->arg3));
-      closedLoopController.commandPosition(12.0 + odometryInterface.x + request->arg1, 
-                                              odometryInterface.y - request->arg2, 
+      closedLoopController.commandPosition(12.0 + odometryInterface.x + request->arg1,-request->arg2,
+//                                              odometryInterface.y - request->arg2, 
                                               request->arg3);
 //      Serial.println("Turning on closed-loop control");
       currController = &closedLoopController;

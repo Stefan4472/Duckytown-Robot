@@ -50,7 +50,7 @@ class Driver:
       lane_center = (yellow[0] + white[0]) / 2.0, (yellow[1] + white[1]) / 2.0
     elif white and not yellow:
       print('Using white line')
-      lane_center = (white[0], white[1] - (2.0*cv.LANE_WIDTH_PX / 2.0))
+      lane_center = (white[0], white[1] - (cv.LANE_WIDTH_PX / 2.0))
     elif yellow and not white:
       print('Using yellow line')
       lane_center = (yellow[0], yellow[1] + cv.yellow_width + 1.2*cv.LANE_WIDTH_PX / 2.0)
