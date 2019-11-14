@@ -1,6 +1,7 @@
 from enum import Enum
 from math import pi as PI
 import cv
+import time
 
 # States that the driver can be in.
 class DriveState(Enum):
@@ -35,22 +36,36 @@ class Driver:
       
     # TODO: IMAGE PROCESSING. Switch to lane-following once lanes are seen
     
+    start_time = time.time()
     # Get center coordinates *in pixels*
     yellow, white, stop = cv.analyze_img(image)
+    analyze_time = time.time()
+    print('Analyzing image took {}'.format(analyze_time - start_time))
     print(yellow, white, stop)
     # Get lane center
     lane_center = 0
     if yellow and white:
       print('Got yellow {}, white {}'.format(yellow, white))
       lane_center = (yellow[0] + white[0]) / 2.0, (yellow[1] + white[1]) / 2.0
-      print('Lane center at px({})'.format(lane_center))
-      # Resolve target in robot frame
-      r_target = cv.get_position(lane_center[0], lane_center[1])
-      print('Resolved to target r({})'.format(r_target))
-      self.car.command_closedloop(r_target[0], r_target[1], 0.0)
-      print('Sent command')
+    elif white and not yellow:
+      print('Using white line')
+      lane_center = (white[0], white[1] - (cv.LANE_WIDTH_PX / 2.0))
+    elif yellow and not white:
+      print('Using yellow line')
+      lane_center = (yellow[0], yellow[1] + cv.yellow_width + cv.LANE_WIDTH_PX / 2.0)
     else:
       print('Couldn\'t see the lane')
+      raise Exception('Can\'t see the road')
+      return
+      
+    print('Lane center at px({})'.format(lane_center))
+    # Resolve target in robot frame
+    r_target = cv.get_position(lane_center[0], lane_center[1])
+    print('Resolved to target r({})'.format(r_target))
+    start_time = time.time()
+    self.car.command_closedloop(r_target[0], r_target[1], 0.0)
+    print('Sending the command took {}'.format(time.time() - start_time))
+    print('Sent command')
     #elif found_y:
     #  lane_center = yellow_loc[1] + yellow_width + (lane_width / 2)
     #elif found_w:

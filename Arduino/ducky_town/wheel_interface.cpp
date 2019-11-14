@@ -86,7 +86,7 @@ bool WheelInterface::commandPWMs(int leftPWM, int rightPWM)
   {
     this->motorShield.setM1Speed(lastCommandedLeftPWM);
     this->motorShield.setM2Speed(lastCommandedRightPWM);
-    Serial.println("Commanding PWMs " + String(lastCommandedLeftPWM) + ", " + String(lastCommandedRightPWM));
+//    Serial.println("Commanding PWMs " + String(lastCommandedLeftPWM) + ", " + String(lastCommandedRightPWM));
 
     currLeftPWM = lastCommandedLeftPWM;
     currRightPWM = lastCommandedRightPWM;
@@ -102,8 +102,25 @@ bool WheelInterface::commandStraightSpeed(float cmPerSec)
 
 bool WheelInterface::commandSpeeds(float leftCmPerSec, float rightCmPerSec)
 {
-  Serial.println("Commanding speeds " + String(leftCmPerSec) + ", " + String(rightCmPerSec));
-  return commandPWMs(leftPWMFromSpeed(leftCmPerSec), rightPWMFromSpeed(rightCmPerSec));
+//  Serial.println("Commanding speeds " + String(leftCmPerSec) + ", " + String(rightCmPerSec));
+  int left_pwm = leftPWMFromSpeed(leftCmPerSec);
+  int right_pwm = rightPWMFromSpeed(rightCmPerSec);
+
+  // Handle PWM over speed limit: bring down to speed limit and keep the ratio constant.
+  if (left_pwm > maxLeftPWM)
+  {
+    float r_to_l = right_pwm * 1.0 / left_pwm;
+    left_pwm = maxLeftPWM;
+    right_pwm = left_pwm * r_to_l;
+  }
+  if (right_pwm > maxRightPWM)
+  {
+   float l_to_r = left_pwm * 1.0 / right_pwm;
+   right_pwm = maxRightPWM;
+   left_pwm = right_pwm * l_to_r; 
+  }
+  
+  return commandPWMs(left_pwm, right_pwm);
 }
 
 void WheelInterface::setSpeedLimit(float cmPerSec)

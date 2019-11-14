@@ -6,15 +6,15 @@
 //#define K_ROT 28.0
 //#define B_ROT 2.0
 
-#define K_TRANS 0.05
+#define K_TRANS 0.2 //0.05
 #define B_TRANS 0.1
-#define K_ROT 0.4 // 1.6
-#define B_ROT 0.2 // 1.8
+#define K_ROT 5 // 1.6
+#define B_ROT 0.001 // 1.8
 
 void ClosedLoopController::update(OdometryInterface* odometry, WheelInterface* wheels)
 {
   /********************************************Theta-only*******************************************/
-  bool simpleControl = true;
+  bool simpleControl = false;
   if(simpleControl)
   {
     float theta_error = -targetTheta; // may be flipped
@@ -51,9 +51,9 @@ void ClosedLoopController::update(OdometryInterface* odometry, WheelInterface* w
 //    Serial.print(" | Y: " + String(odometry->y));
 //    Serial.println(" | T: " + String(yoke_t));
 ////    
-    Serial.print("errX: " + String(x_error));
-    Serial.print(" | errY: " + String(y_error));
-    Serial.println(" | errT: " + String(theta_error));
+//    Serial.print("errX: " + String(x_error));
+//    Serial.print(" | errY: " + String(y_error));
+//    Serial.println(" | errT: " + String(theta_error));
 //
 //    if (sqrt(x_error*x_error + y_error*y_error) < 4.0)
 //    {
@@ -85,7 +85,7 @@ void ClosedLoopController::setThetaControl(float speed_lim, float theta_rel)
 
 void ClosedLoopController::commandPosition(float x, float y, float theta)
 {
-  Serial.println("Setting target " + String(x) + ", " + String(y) + ", " + String(theta));
+//  Serial.println("Setting target " + String(x) + ", " + String(y) + ", " + String(theta));
   targetX = x;
   targetY = y;
   targetTheta = theta;

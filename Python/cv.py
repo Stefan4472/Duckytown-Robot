@@ -31,7 +31,7 @@ sample_size = 3
 pixels_per_cm = 12
 center = 160
 yellow_width = 22
-lane_width = 240
+LANE_WIDTH_PX = 240
 
 # Convert pixel position to a real-world robot position (cm x, cm y)
 def get_position(pixel_row, pixel_col):
@@ -71,7 +71,7 @@ def analyze_img(m):
 
   # loop through picture, looking for pixels that classify as red, yellow, or white
   for i in range(start_row, start_row + rows_checked):
-      for j in range(start_col, start_col + cols_checked):
+      for j in range(start_col, start_col + cols_checked, 5):
           if not found_y and isColor(m[i][j], yellow, yellow_tolerance) and \
                           isColor(m[i + sample_size][j], yellow, yellow_tolerance) and \
                           isColor(m[i][j + sample_size], yellow, yellow_tolerance) and \
@@ -98,7 +98,7 @@ def analyze_img(m):
               white_loc[1] = j
 
   # after looping from left, loop from right on the row where we found the color to find coordinates of right side
-  for j in range(start_col, start_col + cols_checked):
+  for j in range(start_col, start_col + cols_checked, 5):
       if not right_y and isColor(m[yellow_loc[0]][cols_checked - 1 - j], yellow, yellow_tolerance) and \
               isColor(m[yellow_loc[0] + sample_size][cols_checked - 1 - j], yellow, yellow_tolerance) and \
               isColor(m[yellow_loc[0]][cols_checked - 1 - j - sample_size], yellow, yellow_tolerance) and \
