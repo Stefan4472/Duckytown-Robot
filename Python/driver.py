@@ -2,6 +2,7 @@ from enum import Enum
 from math import pi as PI
 import cv
 import time
+from PIL import Image 
 
 # States that the driver can be in.
 class DriveState(Enum):
@@ -49,12 +50,13 @@ class Driver:
       lane_center = (yellow[0] + white[0]) / 2.0, (yellow[1] + white[1]) / 2.0
     elif white and not yellow:
       print('Using white line')
-      lane_center = (white[0], white[1] - (cv.LANE_WIDTH_PX / 2.0))
+      lane_center = (white[0], white[1] - (2.0*cv.LANE_WIDTH_PX / 2.0))
     elif yellow and not white:
       print('Using yellow line')
-      lane_center = (yellow[0], yellow[1] + cv.yellow_width + cv.LANE_WIDTH_PX / 2.0)
+      lane_center = (yellow[0], yellow[1] + cv.yellow_width + 1.2*cv.LANE_WIDTH_PX / 2.0)
     else:
       print('Couldn\'t see the lane')
+      Image.fromarray(image, 'RGB').show()
       raise Exception('Can\'t see the road')
       return
       

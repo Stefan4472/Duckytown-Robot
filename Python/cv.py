@@ -1,12 +1,12 @@
 import numpy as np
 from PIL import Image
-from enum import Enum 
+from enum import Enum
 
 yellow = (254, 240, 82)
 red = (255, 73, 109)
 white = (254, 255, 253)
 
-yellow_tolerance = 25
+yellow_tolerance = 55
 red_tolerance = 30
 white_tolerance = 40
 
@@ -27,7 +27,7 @@ yellow_width = 45
 lane_width = 477
 '''
 # Scaled for 320*240
-sample_size = 3
+sample_size = 4
 pixels_per_cm = 12
 center = 160
 yellow_width = 22
@@ -35,10 +35,10 @@ LANE_WIDTH_PX = 240
 
 # Convert pixel position to a real-world robot position (cm x, cm y)
 def get_position(pixel_row, pixel_col):
-    return (20.0, (160 - pixel_col) * 1.0 / pixels_per_cm)
+    return (20.0, (center - pixel_col) * 1.0 / pixels_per_cm)
     
 start_row = 110
-rows_checked = 30
+rows_checked = 40
 start_col = 0
 cols_checked = 320
 
@@ -68,10 +68,13 @@ def analyze_img(m):
   red_loc = [0, 0, 0, 0]
 
   #TODO: Add green processing to loop
-
+  col_skip = 2;
+  row_skip = 5;
   # loop through picture, looking for pixels that classify as red, yellow, or white
-  for i in range(start_row, start_row + rows_checked):
-      for j in range(start_col, start_col + cols_checked, 5):
+  for i in range(start_row, start_row + rows_checked, row_skip):
+      for j in range(start_col, start_col + cols_checked-col_skip, col_skip):
+          if (i+sample_size >= 240) or (j + sample_size >= 320):
+              continue
           if not found_y and isColor(m[i][j], yellow, yellow_tolerance) and \
                           isColor(m[i + sample_size][j], yellow, yellow_tolerance) and \
                           isColor(m[i][j + sample_size], yellow, yellow_tolerance) and \
@@ -98,7 +101,9 @@ def analyze_img(m):
               white_loc[1] = j
 
   # after looping from left, loop from right on the row where we found the color to find coordinates of right side
-  for j in range(start_col, start_col + cols_checked, 5):
+  for j in range(start_col, start_col + cols_checked-col_skip, col_skip):
+      if (i+sample_size >= 240) or (j+sample_size >= 320):
+          continue
       if not right_y and isColor(m[yellow_loc[0]][cols_checked - 1 - j], yellow, yellow_tolerance) and \
               isColor(m[yellow_loc[0] + sample_size][cols_checked - 1 - j], yellow, yellow_tolerance) and \
               isColor(m[yellow_loc[0]][cols_checked - 1 - j - sample_size], yellow, yellow_tolerance) and \
@@ -129,20 +134,6 @@ def analyze_img(m):
   stop_center = [red_loc[0], int(red_loc[1] + (red_loc[3] - red_loc[1]) / 2)] if found_r else None
   white_center = [white_loc[0], int(white_loc[1] + (white_loc[3] - white_loc[1]) / 2)] if found_w else None
 
-  '''
-  print('Yellow Location:')
-  print(yellow_loc)
-  print('Yellow Center Pixel:')
-  print(yellow_center)
-  print('Red Location:')
-  print(red_loc)
-  print('Red Center Pixel:')
-  print(stop_center)
-  print('White Location:')
-  print(white_loc)
-  print('White Center Pixel:')
-  print(white_center)
-  '''
   # Return center of yellow lane, white lane, stop line (if found).
   # Each return is a tuple of (row, col) pixel coordinates
   return yellow_center, white_center, stop_center #, green_center

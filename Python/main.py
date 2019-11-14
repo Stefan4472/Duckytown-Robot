@@ -16,7 +16,7 @@ if __name__ == '__main__':
 
   camera.start()
   time.sleep(2)
-  driver.set_speed_limit(10.0)
+  driver.set_speed_limit(15.0)
   #driver.instruct(TurnType.STRAIGHT)
   pixel_data = np.empty(shape=(IMAGE_HEIGHT, IMAGE_WIDTH, 3), dtype='uint8')
   

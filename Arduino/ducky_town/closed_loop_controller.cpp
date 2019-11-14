@@ -8,20 +8,24 @@
 
 #define K_TRANS 0.2 //0.05
 #define B_TRANS 0.1
-#define K_ROT 5 // 1.6
-#define B_ROT 0.001 // 1.8
-
+#define K_ROT 3.85 //3 // 1.6
+#define B_ROT 0 // 1.8
+float errmax = 0.0;
 void ClosedLoopController::update(OdometryInterface* odometry, WheelInterface* wheels)
 {
   /********************************************Theta-only*******************************************/
-  bool simpleControl = false;
-  if(simpleControl)
+  bool simpleControl = true;
+  if(simpleControl)   
   {
-    float theta_error = -targetTheta; // may be flipped
+    float theta_error = targetY;
+    Serial.println("ERROR: " + String(targetY));
+//    float theta_error = -targetTheta; // may be flipped
     float theta_dot_error = odometry->dTheta;
+//    theta_dot_error = 0.0;
     float theta_ddot = -K_ROT * theta_error - B_ROT * theta_dot_error;
-    
-    wheels->commandSpeeds(this->speedLim - theta_ddot, this->speedLim + theta_ddot);
+    float SPEEDLIM = 15.0;
+    wheels->commandSpeeds(SPEEDLIM - theta_ddot, SPEEDLIM + theta_ddot);
+//    wheels->commandSpeeds(this->speedLim - theta_ddot, this->speedLim + theta_ddot);
   
     return;
   }
