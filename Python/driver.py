@@ -24,12 +24,17 @@ RIGHT_TURN_RADIUS = 5.0
 class Driver:
   def __init__(self, arduino_interface):
     self.car = arduino_interface
-    self.state = DriveState.STOPPED
+    self.state = DriveState.FOLLOWING_LANE
     self.speed_limit = 10.0
     return
 
   # Returns False if it requires more instructions.
   def update(self, image):
+    if self.state == DriveState.STOPPED:
+      print('Stopped')
+      input("Press Enter to continue")
+      self.state = DriveState.FOLLOWING_LANE
+      return
     print('Updating driver')
     # Do nothing if stopped. Await instructions.
     #if self.state == DriveState.STOPPED:
@@ -45,21 +50,26 @@ class Driver:
     print(yellow, white, stop)
     # Get lane center
     lane_center = 0
+    if stop and stop[1] < cv.img_width*0.77 and stop[1] > cv.img_width*0.33:
+      self.car.command_motor_pwms(0, 0)
+      self.state = DriveState.STOPPED
+      return
     if yellow and white:
       print('Got yellow {}, white {}'.format(yellow, white))
       lane_center = (yellow[0] + white[0]) / 2.0, (yellow[1] + white[1]) / 2.0
     elif white and not yellow:
       print('Using white line')
-      lane_center = (white[0], white[1] - (cv.LANE_WIDTH_PX / 2.0))
+      lane_center = (white[0], white[1] - 1.3*(cv.LANE_WIDTH_PX / 2.0))
     elif yellow and not white:
       print('Using yellow line')
-      lane_center = (yellow[0], yellow[1] + cv.yellow_width + 1.2*cv.LANE_WIDTH_PX / 2.0)
+      lane_center = (yellow[0], yellow[1] + 0.8*(cv.LANE_WIDTH_PX / 2.0))
     else:
       print('Couldn\'t see the lane')
-      Image.fromarray(image, 'RGB').show()
-      raise Exception('Can\'t see the road')
-      return
-      
+      lane_center = self.old_ctr
+      #Image.fromarray(image, 'RGB').show()
+      #raise Exception('Can\'t see the road')
+      #return
+    self.old_ctr = lane_center
     print('Lane center at px({})'.format(lane_center))
     # Resolve target in robot frame
     r_target = cv.get_position(lane_center[0], lane_center[1])

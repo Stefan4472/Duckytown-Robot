@@ -7,7 +7,7 @@ red = (255, 73, 109)
 white = (254, 255, 253)
 
 yellow_tolerance = 55
-red_tolerance = 30
+red_tolerance = 45
 white_tolerance = 40
 
 # # Possible colors
@@ -26,6 +26,8 @@ center = 320
 yellow_width = 45
 lane_width = 477
 '''
+img_width = 320
+img_height = 240
 # Scaled for 320*240
 sample_size = 4
 pixels_per_cm = 12
@@ -36,11 +38,10 @@ LANE_WIDTH_PX = 240
 # Convert pixel position to a real-world robot position (cm x, cm y)
 def get_position(pixel_row, pixel_col):
     return (20.0, (center - pixel_col) * 1.0 / pixels_per_cm)
-    
-start_row = 110
+start_row = 140
 rows_checked = 40
 start_col = 0
-cols_checked = 320
+cols_checked = img_width
 
 # Takes a pixel (red, green, blue).
 # Attempts to classify the color. Returns 'Color' value.
