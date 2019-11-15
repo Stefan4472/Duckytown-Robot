@@ -30,7 +30,6 @@ class RegionOfInterest:
 
 # Fills in the specified RegionOfInterest with the given rgb color (r, g, b).
 def draw_region(image, region, rgb, line_thickness=3):
-  print('Drawing region {}'.format(region))
   # Top line
   for i in range(region.row, region.row + line_thickness):
     for j in range(region.col, region.col + region.width):
@@ -49,11 +48,10 @@ def draw_region(image, region, rgb, line_thickness=3):
       image[i][j] = rgb
 
 # Draws square of given rgb color and width at i, j.
-def draw_square(img, i, j, rgb, width):
+def draw_square(img, row, col, rgb, width):
   half_width = int(width / 2.0)
-  for i in range(i - half_width, i + half_width):
-    for j in range(j - half_width, j + half_width):
-      print('Filling pixel {}, {}'.format(i, j))
+  for i in range(row - half_width, row + half_width):
+    for j in range(col - half_width, col + half_width):
       img[i][j] = rgb
 
 # Define default regions of interest.
@@ -90,7 +88,7 @@ def classify_color(pixel):
   if is_color(pixel, YELLOW_RGB, YELLOW_TOLERANCE):
     return Color.YELLOW
   elif is_color(pixel, WHITE_RGB, WHITE_TOLERANCE):
-    return Color.YELLOW
+    return Color.WHITE
   elif is_color(pixel, RED_RGB, RED_TOLERANCE):
     return Color.RED
   else:
@@ -100,15 +98,16 @@ def classify_color(pixel):
 # Attempts to classify the color. Returns 'Color' value.
 # def getColor(pixel):
 def is_color(pixel, rgb, tolerance):
+  # print('Checking color on rgb, tolerance {} {}'.format(rgb, tolerance))
   return True if \
     (abs(pixel[0] - rgb[0]) < tolerance and \
      abs(pixel[1] - rgb[1]) < tolerance and \
      abs(pixel[2] - rgb[2]) < tolerance) else False
 
 # Searches given RegionOfInterest for a box of the given color.
-# Returns (row, col) of pixel if found, otherwise None.  TODO: AVOID CONFUSION BETWEEN (ROW, COL) NOTATION AND (COL, ROW) NOTATION
+# Returns (row, col) of pixel if found, otherwise None. 
 def search_region(image, region, color, box_size=3, step_rows=8, step_cols=8):
-  print('Searching region {} for color {}'.format(region, color))
+  # print('Searching region {} for color {}'.format(region, color))
   rgb, tolerance = get_color_params(color)
   # print('Params are {}, {}'.format(rgb, tolerance))
   for i in range(region.row, region.row + region.height, step_rows):
@@ -131,8 +130,9 @@ def check_rgb_box(image, row, col, rgb, tolerance, box_size):
 
 # Searches horizontally to find the extent of pixels of the given color horizontally.
 # Returns (start_point, end_point)
-def get_color_extent_w(image, row, col):
+def get_color_extent_hz(image, row, col):
   rgb, tolerance = get_color_params(classify_color(image[row][col]))
+  # print('Getting color extent on {}, {}: RGB is {}, color is {}'.format(row, col, image[row][col], classify_color(image[row][col])))
   start_col = col
   end_col = col
   
@@ -149,6 +149,27 @@ def get_color_extent_w(image, row, col):
     j -= 1
 
   return (row, start_col), (row, end_col)
+
+# Searches vertically to find the extent of pixels of the given color.
+# Returns (start_point, end_point)
+def get_color_extent_vt(image, row, col):
+  rgb, tolerance = get_color_params(classify_color(image[row][col]))
+  start_row = row
+  end_row = row
+  
+  # Scan down.
+  i = row + 1
+  while i < image.shape[0] and is_color(image[i][col], rgb, tolerance):
+    end_row += 1
+    i += 1
+  
+  # Scan to the left.
+  i = row - 1
+  while i > -1 and is_color(image[i][col], rgb, tolerance):
+    start_row -= 1
+    i -= 1
+
+  return (start_row, col), (end_row, col)
   
 # Scaled for 320*240  # TODO: THESE CONSTANTS WON'T HOLD FOR ALL IMAGE DEPTHS
 PX_PER_CM = 12
@@ -163,6 +184,7 @@ def analyze_img(img):
   white_px = search_region(img, white_roi, Color.WHITE)
   red_px = search_region(img, red_roi, Color.RED)
   # Search backup regions as needed. TODO: DO WE NEED BOTH COLORS? SHOULD WE ONLY SEARCH BACKUPS IF NEITHER COLOR SHOWS ON FIRST RUN?
+  # TODO: SHOULD WE SEARCH STOP BACKUP?
   if not yellow_px:
     print('Searching yellow backup')
     yellow_px = search_region(img, yellow_backup_roi, Color.YELLOW)
@@ -176,20 +198,27 @@ def analyze_img(img):
     white_px = search_region(img, catastrophic_roi, Color.WHITE)
   # Get lane centers.
   if yellow_px:
-    start_yellow, end_yellow = get_color_extent_w(img, yellow_px[0], yellow_px[1])
-    yellow_center = yellow_px[0], int((end_yellow[1] - start_yellow[1]) / 2.0)
+    start_yellow, end_yellow = get_color_extent_hz(img, yellow_px[0], yellow_px[1])
+    yellow_center = yellow_px[0], start_yellow[1] + int((end_yellow[1] - start_yellow[1]) / 2.0)
   if white_px: 
-    start_white, end_white = get_color_extent_w(img, white_px[0], white_px[1])
-    white_center = white_px[0], int((end_white[1] - start_white[1]) / 2.0)
-  red_center = red_px # TODO: GET_COLOR_EXTENT_H
+    # print('Getting color extent on white at {}, {} with rgb {}'.format(white_px[0], white_px[1], img[white_px[0], white_px[1]]))
+    start_white, end_white = get_color_extent_hz(img, white_px[0], white_px[1])
+    white_center = white_px[0], start_white[1] + int((end_white[1] - start_white[1]) / 2.0)
+  if red_px:
+    start_red, end_red = get_color_extent_vt(img, red_px[0], red_px[1])
+    red_center = start_red[0] + int((end_red[0] - start_red[0]) / 2.0), red_px[1]
   return yellow_center, white_center, red_center
 
 
 if __name__ == '__main__':
+  if len(sys.argv) < 2:
+    print('Missing argument: path to image')
+    sys.exit(1)
   # load image for testing
   img_path = sys.argv[1]
   print('Analyzing image {}'.format(img_path))
   img = np.array(Image.open(img_path).resize(CAMERA_RESOLUTION))
+
   start_time = time.time()
   y, w, r = analyze_img(img)
   end_time = time.time()
@@ -213,3 +242,4 @@ if __name__ == '__main__':
     draw_square(img, r[0], r[1], (0, 0, 0), 5)
 
   Image.fromarray(img, 'RGB').show()
+  
