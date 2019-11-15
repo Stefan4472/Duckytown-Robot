@@ -1,151 +1,215 @@
+import sys
+import time
 import numpy as np
 from PIL import Image
 from enum import Enum
-
-yellow = (254, 240, 82)
-red = (255, 73, 109)
-white = (254, 255, 253)
-
-yellow_tolerance = 55
-red_tolerance = 30
-white_tolerance = 40
-
-# # Possible colors
-# class Color(Enum):
-#   UNRECOGNIZED = 0
-#   YELLOW = 1
-#   WHITE = 2
-#   RED = 3
-#   # GREEN = 4
-
-### SCALED FOR 640*480 IMAGE SIZE, RESCALE FOR FINAL
 '''
-sample_size = 3
-pixels_per_cm = 24
-center = 320
-yellow_width = 45
-lane_width = 477
+Image processing functions. Assumes camera resolution of 320*240px (320 wide, 240 tall).
 '''
-# Scaled for 320*240
-sample_size = 4
-pixels_per_cm = 12
-center = 160
-yellow_width = 22
-LANE_WIDTH_PX = 240
 
-# Convert pixel position to a real-world robot position (cm x, cm y)
-def get_position(pixel_row, pixel_col):
-    return (20.0, (center - pixel_col) * 1.0 / pixels_per_cm)
+CAMERA_RESOLUTION = (320, 240)
+
+YELLOW_RGB = (254, 240, 82)
+RED_RGB = (255, 73, 109)
+WHITE_RGB = (254, 255, 253)
+
+YELLOW_TOLERANCE = 55
+RED_TOLERANCE = 30
+WHITE_TOLERANCE = 40
+
+# Defines a rectangular region of interest on an image.
+class RegionOfInterest:
+  def __init__(self, row, col, width, height):
+    self.row = row
+    self.col = col
+    self.width = width
+    self.height = height
+  
+  def __repr__(self):
+    return 'RegionOfInterest({}, {}, {}, {})'.format(self.row, self.col, self.width, self.height)
+
+# Fills in the specified RegionOfInterest with the given rgb color (r, g, b).
+def draw_region(image, region, rgb, line_thickness=3):
+  print('Drawing region {}'.format(region))
+  # Top line
+  for i in range(region.row, region.row + line_thickness):
+    for j in range(region.col, region.col + region.width):
+      image[i][j] = rgb
+  # Bottom line
+  for i in range(region.row + region.height - line_thickness, region.row + region.height):
+    for j in range(region.col, region.col + region.width):
+      image[i][j] = rgb
+  # Left line
+  for j in range(region.col, region.col + line_thickness):
+    for i in range(region.row, region.row + region.height):
+      image[i][j] = rgb
+  # Right line
+  for j in range(region.col + region.width - line_thickness, region.col + region.width):
+    for i in range(region.row, region.row + region.height):
+      image[i][j] = rgb
+
+# Draws square of given rgb color and width at i, j.
+def draw_square(img, i, j, rgb, width):
+  half_width = int(width / 2.0)
+  for i in range(i - half_width, i + half_width):
+    for j in range(j - half_width, j + half_width):
+      print('Filling pixel {}, {}'.format(i, j))
+      img[i][j] = rgb
+
+# Define default regions of interest.
+# Each color has a default region and a backup region.
+# There is also a catastrophic region, to be used if 
+# *no* lane markings can be found.
+yellow_roi = RegionOfInterest(100, 7, 40, 40)
+yellow_backup_roi = RegionOfInterest(70, 0, 65, 100)
+white_roi = RegionOfInterest(100, 275, 40, 40)
+white_backup_roi = RegionOfInterest(70, 255, 65, 100)
+red_roi = RegionOfInterest(100, 150, 40, 40)
+red_backup_roi = RegionOfInterest(130, 150, 45, 100)
+catastrophic_roi = RegionOfInterest(0, 0, CAMERA_RESOLUTION[0], CAMERA_RESOLUTION[1])
+
+# Possible colors
+class Color(Enum):
+  UNRECOGNIZED = 0
+  YELLOW = 1
+  WHITE = 2
+  RED = 3
+  # GREEN = 4
+
+def get_color_params(color):
+  if color == Color.YELLOW:
+    return YELLOW_RGB, YELLOW_TOLERANCE
+  elif color == Color.RED:
+    return RED_RGB, RED_TOLERANCE
+  elif color == Color.WHITE:
+    return WHITE_RGB, WHITE_TOLERANCE
+  else:
+    raise ValueError('Invalid color')
+
+def classify_color(pixel):
+  if is_color(pixel, YELLOW_RGB, YELLOW_TOLERANCE):
+    return Color.YELLOW
+  elif is_color(pixel, WHITE_RGB, WHITE_TOLERANCE):
+    return Color.YELLOW
+  elif is_color(pixel, RED_RGB, RED_TOLERANCE):
+    return Color.RED
+  else:
+    return Color.UNRECOGNIZED
     
-start_row = 110
-rows_checked = 40
-start_col = 0
-cols_checked = 320
-
 # Takes a pixel (red, green, blue).
 # Attempts to classify the color. Returns 'Color' value.
 # def getColor(pixel):
+def is_color(pixel, rgb, tolerance):
+  return True if \
+    (abs(pixel[0] - rgb[0]) < tolerance and \
+     abs(pixel[1] - rgb[1]) < tolerance and \
+     abs(pixel[2] - rgb[2]) < tolerance) else False
 
-def isColor(pixel, color, tolerance):
-    if abs(pixel[0] - color[0]) < tolerance and \
-       abs(pixel[1] - color[1]) < tolerance and \
-       abs(pixel[2] - color[2]) < tolerance:
-        return True
-    return False
+# Searches given RegionOfInterest for a box of the given color.
+# Returns (row, col) of pixel if found, otherwise None.  TODO: AVOID CONFUSION BETWEEN (ROW, COL) NOTATION AND (COL, ROW) NOTATION
+def search_region(image, region, color, box_size=3, step_rows=8, step_cols=8):
+  print('Searching region {} for color {}'.format(region, color))
+  rgb, tolerance = get_color_params(color)
+  # print('Params are {}, {}'.format(rgb, tolerance))
+  for i in range(region.row, region.row + region.height, step_rows):
+    for j in range(region.col, region.col + region.width, step_cols):
+      # print('Checking pixel {}, {}, color={}'.format(i, j, image[i][j]))
+      # if is_color(image[i][j], rgb, tolerance):
+        # print('Found color at {}, {}'.format(i, j))
+      if is_color(image[i][j], rgb, tolerance) and \
+         check_rgb_box(image, i, j, rgb, tolerance, box_size):
+        return (i, j)
+  return None
 
-def analyze_img(m):
-  # flags for if a color is found, if we found a color we stop searching for it in loop
-  found_y = False
-  found_w = False
-  found_r = False
-  right_y = False
-  right_w = False
-  right_r = False
-  # tuples for location of colors where 0 = row of left color, 1 = col of left color,
-  #                                     2 = row of right color, 3 = col of right color
-  yellow_loc = [0, 0, 0, 0]
-  white_loc = [0, 0, 0, 0]
-  red_loc = [0, 0, 0, 0]
+# TODO: THIS MAY HAVE BOUNDING ISSUES IF CALLED ON A PIXEL RIGHT AT THE EDGE OF THE IMAGE
+def check_rgb_box(image, row, col, rgb, tolerance, box_size):
+  half_width = int(box_size / 2)
+  return is_color(image[row - half_width][col - half_width], rgb, tolerance) and \
+         is_color(image[row - half_width][col + half_width], rgb, tolerance) and \
+         is_color(image[row + half_width][col - half_width], rgb, tolerance) and \
+         is_color(image[row + half_width][col + half_width], rgb, tolerance)
 
-  #TODO: Add green processing to loop
-  col_skip = 2;
-  row_skip = 5;
-  # loop through picture, looking for pixels that classify as red, yellow, or white
-  for i in range(start_row, start_row + rows_checked, row_skip):
-      for j in range(start_col, start_col + cols_checked-col_skip, col_skip):
-          if (i+sample_size >= 240) or (j + sample_size >= 320):
-              continue
-          if not found_y and isColor(m[i][j], yellow, yellow_tolerance) and \
-                          isColor(m[i + sample_size][j], yellow, yellow_tolerance) and \
-                          isColor(m[i][j + sample_size], yellow, yellow_tolerance) and \
-                          isColor(m[i + sample_size][j + sample_size], yellow, yellow_tolerance):
-              found_y = True  # set flag to prevent searching for yellow
-              # m[i][j] = [255, 0, 0]  # test code to set color of yellow pixel
-              yellow_loc[0] = i  # set color location to coordinates
-              yellow_loc[1] = j
-          elif not found_r and isColor(m[i][j], red, red_tolerance) and \
-                  isColor(m[i + sample_size][j], red, red_tolerance) and \
-                  isColor(m[i][j + sample_size], red, red_tolerance) and \
-                  isColor(m[i + sample_size][j + sample_size], red, red_tolerance):
-              found_r = True
-              # m[i][j] = [0, 255, 0]
-              red_loc[0] = i
-              red_loc[1] = j
-          elif not found_w and isColor(m[i][j], white, white_tolerance) and \
-                  isColor(m[i + sample_size][j], white, white_tolerance) and \
-                  isColor(m[i][j + sample_size], white, white_tolerance) and \
-                  isColor(m[i + sample_size][j + sample_size], white, white_tolerance):
-              found_w = True
-              # m[i][j] = [0, 0, 255]
-              white_loc[0] = i
-              white_loc[1] = j
+# Searches horizontally to find the extent of pixels of the given color horizontally.
+# Returns (start_point, end_point)
+def get_color_extent_w(image, row, col):
+  rgb, tolerance = get_color_params(classify_color(image[row][col]))
+  start_col = col
+  end_col = col
+  
+  # Scan to the right.
+  j = col + 1
+  while j < image.shape[1] and is_color(image[row][j], rgb, tolerance):
+    end_col += 1
+    j += 1
+  
+  # Scan to the left.
+  j = col - 1
+  while j > -1 and is_color(image[row][j], rgb, tolerance):
+    start_col -= 1
+    j -= 1
 
-  # after looping from left, loop from right on the row where we found the color to find coordinates of right side
-  for j in range(start_col, start_col + cols_checked-col_skip, col_skip):
-      if (i+sample_size >= 240) or (j+sample_size >= 320):
-          continue
-      if not right_y and isColor(m[yellow_loc[0]][cols_checked - 1 - j], yellow, yellow_tolerance) and \
-              isColor(m[yellow_loc[0] + sample_size][cols_checked - 1 - j], yellow, yellow_tolerance) and \
-              isColor(m[yellow_loc[0]][cols_checked - 1 - j - sample_size], yellow, yellow_tolerance) and \
-              isColor(m[yellow_loc[0] + sample_size][cols_checked - 1 - j - sample_size], yellow, yellow_tolerance):
-          right_y = True  # invert right_y so we stop checking for yellow
-          yellow_loc[2] = yellow_loc[0]
-          yellow_loc[3] = cols_checked - 1 - j  # set column for rightmost yellow pixel
-      elif not right_r and isColor(m[red_loc[0]][cols_checked - 1 - j], red, red_tolerance) and \
-              isColor(m[red_loc[0] + sample_size][cols_checked - 1 - j], red, red_tolerance) and \
-              isColor(m[red_loc[0]][cols_checked - 1 - j - sample_size], red, red_tolerance) and \
-              isColor(m[red_loc[0] + sample_size][cols_checked - 1 - j - sample_size], red, red_tolerance):
-          right_r = True  # invert right_r so we stop checking for red
-          red_loc[2] = red_loc[0]
-          red_loc[3] = cols_checked - 1 - j  # set column for rightmost red pixel
-      elif not right_w and isColor(m[white_loc[0]][cols_checked - 1 - j], white, white_tolerance) and \
-              isColor(m[white_loc[0] + sample_size][cols_checked - 1 - j], white, white_tolerance) and \
-              isColor(m[white_loc[0]][cols_checked - 1 - j - sample_size], white, white_tolerance) and \
-              isColor(m[white_loc[0] + sample_size][cols_checked - 1 - j - sample_size], white, white_tolerance):
-          right_w = True  # invert right_w so we stop checking for white
-          white_loc[2] = white_loc[0]
-          white_loc[3] = cols_checked - 1 - j  # set column for rightmost white pixel
+  return (row, start_col), (row, end_col)
+  
+# Scaled for 320*240  # TODO: THESE CONSTANTS WON'T HOLD FOR ALL IMAGE DEPTHS
+PX_PER_CM = 12
+YELLOW_LINE_WIDTH_PX = 22
+WHITE_LINE_WIDTH_PX = 25
+LANE_WIDTH_PX = 240
 
-  #TODO: get green center
-
-  # all centers are just the leftmost pixel + (rightmost pixel - leftmost pixel) / 2
-  green_center = [0, 0]
-  yellow_center = [yellow_loc[0], int(yellow_loc[1] + (yellow_loc[3] - yellow_loc[1]) / 2)] if found_y else None
-  stop_center = [red_loc[0], int(red_loc[1] + (red_loc[3] - red_loc[1]) / 2)] if found_r else None
-  white_center = [white_loc[0], int(white_loc[1] + (white_loc[3] - white_loc[1]) / 2)] if found_w else None
-
-  # Return center of yellow lane, white lane, stop line (if found).
-  # Each return is a tuple of (row, col) pixel coordinates
-  return yellow_center, white_center, stop_center #, green_center
+def analyze_img(img):
+  yellow_center, white_center, red_center = None, None, None
+  # Search default regions.
+  yellow_px = search_region(img, yellow_roi, Color.YELLOW)
+  white_px = search_region(img, white_roi, Color.WHITE)
+  red_px = search_region(img, red_roi, Color.RED)
+  # Search backup regions as needed. TODO: DO WE NEED BOTH COLORS? SHOULD WE ONLY SEARCH BACKUPS IF NEITHER COLOR SHOWS ON FIRST RUN?
+  if not yellow_px:
+    print('Searching yellow backup')
+    yellow_px = search_region(img, yellow_backup_roi, Color.YELLOW)
+  if not white_px:
+    print('Searching white backup')
+    white_px = search_region(img, white_backup_roi, Color.WHITE)
+  # Run catastrophic region if still no results.
+  if not yellow_px and not white_px:
+    print('Searching catastrophic')
+    yellow_px = search_region(img, catastrophic_roi, Color.YELLOW)
+    white_px = search_region(img, catastrophic_roi, Color.WHITE)
+  # Get lane centers.
+  if yellow_px:
+    start_yellow, end_yellow = get_color_extent_w(img, yellow_px[0], yellow_px[1])
+    yellow_center = yellow_px[0], int((end_yellow[1] - start_yellow[1]) / 2.0)
+  if white_px: 
+    start_white, end_white = get_color_extent_w(img, white_px[0], white_px[1])
+    white_center = white_px[0], int((end_white[1] - start_white[1]) / 2.0)
+  red_center = red_px # TODO: GET_COLOR_EXTENT_H
+  return yellow_center, white_center, red_center
 
 
 if __name__ == '__main__':
   # load image for testing
-  im = Image.open(r'/home/sam/Desktop/640p2.jpg')
-  m = np.array(im)
-  img = Image.fromarray(m, 'RGB')
-  y, w, s = analyze_img(m)
-  print(y)
-  print(w)
-  print(s)
-  img.show()
+  img_path = sys.argv[1]
+  print('Analyzing image {}'.format(img_path))
+  img = np.array(Image.open(img_path).resize(CAMERA_RESOLUTION))
+  start_time = time.time()
+  y, w, r = analyze_img(img)
+  end_time = time.time()
+  print('Got Yellow: {}'.format(y))
+  print('Got White: {}'.format(w))
+  print('Got Red: {}'.format(r))
+  print('Took {} seconds'.format(end_time - start_time))
+
+  draw_region(img, yellow_roi, (255, 0, 0))
+  draw_region(img, yellow_backup_roi, (200, 0, 0))
+  draw_region(img, white_roi, (0, 255, 0))
+  draw_region(img, white_backup_roi, (0, 200, 0))
+  draw_region(img, red_roi, (0, 0, 255))
+  draw_region(img, red_backup_roi, (0, 0, 200))
+
+  if y:
+    draw_square(img, y[0], y[1], (0, 0, 0), 5)
+  if w:
+    draw_square(img, w[0], w[1], (0, 0, 0), 5)
+  if r:
+    draw_square(img, r[0], r[1], (0, 0, 0), 5)
+
+  Image.fromarray(img, 'RGB').show()

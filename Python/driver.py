@@ -20,13 +20,11 @@ class TurnType(Enum):
 LEFT_TURN_RADIUS = 10.0
 RIGHT_TURN_RADIUS = 5.0
 
-
 class Driver:
   def __init__(self, arduino_interface):
     self.car = arduino_interface
     self.state = DriveState.STOPPED
     self.speed_limit = 10.0
-    return
 
   # Returns False if it requires more instructions.
   def update(self, image):
