@@ -13,10 +13,21 @@ YELLOW_RGB = (254, 240, 82)
 RED_RGB = (255, 73, 109)
 WHITE_RGB = (254, 255, 253)
 
-YELLOW_TOLERANCE = 55
+YELLOW_TOLERANCE = 75
 RED_TOLERANCE = 30
 WHITE_TOLERANCE = 40
 
+# Scaled for 320*240
+sample_size = 4
+pixels_per_cm = 12
+center = 160
+yellow_width = 22
+LANE_WIDTH_PX = 240
+
+# Convert pixel position to a real-world robot position (cm x, cm y)
+def get_position(pixel_row, pixel_col):
+    return (20.0, (center - pixel_col) * 1.0 / pixels_per_cm)
+    
 # Defines a rectangular region of interest on an image.
 class RegionOfInterest:
   def __init__(self, row, col, width, height):
@@ -59,9 +70,9 @@ def draw_square(img, row, col, rgb, width):
 # There is also a catastrophic region, to be used if 
 # *no* lane markings can be found.
 yellow_roi = RegionOfInterest(100, 7, 40, 40)
-yellow_backup_roi = RegionOfInterest(70, 0, 65, 100)
+yellow_backup_roi = RegionOfInterest(70, 0, 165, 100)
 white_roi = RegionOfInterest(100, 275, 40, 40)
-white_backup_roi = RegionOfInterest(70, 255, 65, 100)
+white_backup_roi = RegionOfInterest(70, 155, 165, 100)
 red_roi = RegionOfInterest(100, 150, 40, 40)
 red_backup_roi = RegionOfInterest(130, 150, 45, 100)
 catastrophic_roi = RegionOfInterest(0, 0, CAMERA_RESOLUTION[0], CAMERA_RESOLUTION[1])
@@ -109,12 +120,14 @@ def is_color(pixel, rgb, tolerance):
 def search_region(image, region, color, box_size=3, step_rows=8, step_cols=8):
   # print('Searching region {} for color {}'.format(region, color))
   rgb, tolerance = get_color_params(color)
+  box_width = int(box_size / 2.0)
   # print('Params are {}, {}'.format(rgb, tolerance))
-  for i in range(region.row, region.row + region.height, step_rows):
-    for j in range(region.col, region.col + region.width, step_cols):
+  for i in range(region.row + box_width, region.row + region.height - box_width, step_rows):
+    for j in range(region.col + box_width, region.col + region.width - box_width, step_cols):
+      #print(i, j)
       # print('Checking pixel {}, {}, color={}'.format(i, j, image[i][j]))
-      # if is_color(image[i][j], rgb, tolerance):
-        # print('Found color at {}, {}'.format(i, j))
+      #if is_color(image[i][j], rgb, tolerance):
+      #  print('Found color at {}, {}'.format(i, j))
       if is_color(image[i][j], rgb, tolerance) and \
          check_rgb_box(image, i, j, rgb, tolerance, box_size):
         return (i, j)
@@ -211,20 +224,25 @@ def analyze_img(img):
 
 
 if __name__ == '__main__':
-  if len(sys.argv) < 2:
-    print('Missing argument: path to image')
-    sys.exit(1)
-  # load image for testing
-  img_path = sys.argv[1]
-  print('Analyzing image {}'.format(img_path))
+  if len(sys.argv) == 2:
+    img_path = sys.argv[1]
+    print('Analyzing image {}'.format(img_path))
+  else:
+    import picamera
+    with picamera.PiCamera() as camera:
+      camera.resolution = (320, 240)
+      # Camera warm-up time
+      time.sleep(2)
+      camera.capture('_photo.jpg')
+      img_path = '_photo.jpg'
   img = np.array(Image.open(img_path).resize(CAMERA_RESOLUTION))
 
   start_time = time.time()
-  y, w, r = analyze_img(img)
+  yellow, white, red = analyze_img(img)
   end_time = time.time()
-  print('Got Yellow: {}'.format(y))
-  print('Got White: {}'.format(w))
-  print('Got Red: {}'.format(r))
+  print('Got Yellow: {}'.format(yellow))
+  print('Got White: {}'.format(white))
+  print('Got Red: {}'.format(red))
   print('Took {} seconds'.format(end_time - start_time))
 
   draw_region(img, yellow_roi, (255, 0, 0))
@@ -234,12 +252,23 @@ if __name__ == '__main__':
   draw_region(img, red_roi, (0, 0, 255))
   draw_region(img, red_backup_roi, (0, 0, 200))
 
-  if y:
-    draw_square(img, y[0], y[1], (0, 0, 0), 5)
-  if w:
-    draw_square(img, w[0], w[1], (0, 0, 0), 5)
-  if r:
-    draw_square(img, r[0], r[1], (0, 0, 0), 5)
+  if yellow:
+    draw_square(img, yellow[0], yellow[1], (0, 0, 0), 5)
+  if white:
+    draw_square(img, white[0], white[1], (0, 0, 0), 5)
+  if red:
+    draw_square(img, red[0], red[1], (0, 0, 0), 5)
 
+  lane_center = None
+  if yellow and white:
+    lane_center = (yellow[0] + white[0]) / 2.0, (yellow[1] + white[1]) / 2.0
+  elif white and not yellow:
+    lane_center = (white[0], white[1] - (cv.LANE_WIDTH_PX / 2.0))
+  elif yellow and not white:
+    lane_center = (yellow[0], yellow[1] + cv.yellow_width + 1.2*cv.LANE_WIDTH_PX / 2.0)
+  
+  if lane_center:
+    draw_square(img, int(lane_center[0]), int(lane_center[1]), (255, 255, 255), 10)
+    
   Image.fromarray(img, 'RGB').show()
   
