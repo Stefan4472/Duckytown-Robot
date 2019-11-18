@@ -66,7 +66,7 @@ void loop()
   }
 
   // Check distance and limit speed, if necessary
-//  proximitySensor.runCollisionAvoidance(odometryInterface.dX, &wheelInterface);
+  proximitySensor.runCollisionAvoidance(&wheelInterface, odometryInterface.dX);
 
   // Print readings once every 1000 ms.
 //  ms_since_print += curr_time - lastLoop;
@@ -96,14 +96,13 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
       response->seqNum = request->seqNum;
       return true;
 
+    // SET_SPEEDLIMIT command
+    case static_cast<int>(PiToArduinoCmd::SET_SPEEDLIMIT):
+      wheelInterface.setSpeedLimit(request->arg1);
+      return false;
+      
     // SET_MOTORS command
     case static_cast<int>(PiToArduinoCmd::SET_MOTORS):
-      //      Serial.println("Commanding PWMs");
-      //      Serial.print((int) request->arg1);
-      //      Serial.print('/');
-      //      Serial.print((int) request->arg2);
-      //      Serial.println();
-//      Serial.println("Turning off open-loop control");
       // Turn off the controller (if any)
       currController = NULL;
       wheelInterface.commandPWMs((int) request->arg1, (int) request->arg2);
@@ -154,10 +153,10 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
       currController = &openLoopController;
       return false; 
 
-    // SET_CLOSEDLOOP command  TODO: CURRENTLY RELATIVE
+    // SET_CLOSEDLOOP command  TODO: CURRENTLY RELATIVE  // TODO: THETA-CONTROL COMMAND
     case static_cast<int>(PiToArduinoCmd::SET_CLOSEDLOOP):
-      Serial.println("Rel " + String(request->arg1) + ", " + String(request->arg2) + ", " + String(request->arg3));
-      Serial.println("Abs " + String(12.0 + odometryInterface.x + request->arg1) + ", " + String(odometryInterface.y + request->arg2) + ", " + String(request->arg3));
+//      Serial.println("Rel " + String(request->arg1) + ", " + String(request->arg2) + ", " + String(request->arg3));
+//      Serial.println("Abs " + String(12.0 + odometryInterface.x + request->arg1) + ", " + String(odometryInterface.y + request->arg2) + ", " + String(request->arg3));
       //      Serial.println("Running left curve, target = " + String(request->arg3));
       closedLoopController.commandPosition(12.0 + odometryInterface.x + request->arg1,-request->arg2,
 //                                              odometryInterface.y - request->arg2, 

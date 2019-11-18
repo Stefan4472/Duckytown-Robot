@@ -16,6 +16,7 @@ const uint8_t ARDUINO_TO_PI_PACKET_LENGTH = 14;
 enum class PiToArduinoCmd
 {
   ECHO = 1,
+  SET_SPEEDLIMIT = 2,
   SET_MOTORS = 3,
   GET_ODOMETRY = 5,
   GET_TICKS = 6,

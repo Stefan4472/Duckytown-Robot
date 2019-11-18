@@ -3,6 +3,7 @@ from math import pi as PI
 import cv
 import time
 from PIL import Image 
+from navigator import TurnType
 
 # States that the driver can be in.
 class DriveState(Enum):
@@ -11,11 +12,6 @@ class DriveState(Enum):
   APPROACHING_STOP = 3
   STOPPED = 4
 
-class TurnType(Enum):
-  LEFT = 1,
-  RIGHT = 2,
-  STRAIGHT = 3
-
 # TODO: DETERMINE CORRECT RADII
 LEFT_TURN_RADIUS = 10.0
 RIGHT_TURN_RADIUS = 5.0
@@ -23,20 +19,15 @@ RIGHT_TURN_RADIUS = 5.0
 class Driver:
   def __init__(self, arduino_interface):
     self.car = arduino_interface
-    self.state = DriveState.FOLLOWING_LANE
     self.speed_limit = 10.0
+    self.state = DriveState.STOPPED
+    self.awaiting_instruction = True
 
   # Returns False if it requires more instructions.
   def update(self, image):
-    if self.state == DriveState.STOPPED:
+    if self.state == DriveState.STOPPED:  # TODO: CONDITION SHOULD BE 'AWAITING_INSTRUCTION'
       print('Stopped')
-      input("Press Enter to continue")
-      self.state = DriveState.FOLLOWING_LANE
-      return
-    #print('Updating driver')
-    # Do nothing if stopped. Await instructions.
-    #if self.state == DriveState.STOPPED:
-    #  return False
+      return False
       
     # TODO: IMAGE PROCESSING. Switch to lane-following once lanes are seen
     
@@ -51,6 +42,7 @@ class Driver:
     if stop and stop[1] < cv.img_width*0.77 and stop[1] > cv.img_width*0.33:
       self.car.command_motor_pwms(0, 0)
       self.state = DriveState.STOPPED
+      self.awaiting_instruction = True
       return
     if yellow and white:
       print('Got yellow {}, white {}'.format(yellow, white))
@@ -62,31 +54,18 @@ class Driver:
       print('Using yellow line')
       lane_center = (yellow[0], yellow[1] + cv.yellow_width + 1*(cv.LANE_WIDTH_PX / 2.0))
     else:
-      print('Couldn\'t see the lane')
+      print('Couldn\'t see the lane')  # TODO: TIMEOUT IF CAN'T SEE THE LANE FOR MORE THAN X SECONDS
       lane_center = self.old_ctr
-      #Image.fromarray(image, 'RGB').show()
-      #raise Exception('Can\'t see the road')
-      #return
+      
     self.old_ctr = lane_center
-    #print('Lane center at px({})'.format(lane_center))
     # Resolve target in robot frame
     r_target = cv.get_position(lane_center[0], lane_center[1])
-    #print('Resolved to target r({})'.format(r_target))
-    start_time = time.time()
     self.car.command_closedloop(r_target[0], r_target[1], 0.0)
-    #print('Sending the command took {}'.format(time.time() - start_time))
-    #print('Sent command')
-    #elif found_y:
-    #  lane_center = yellow_loc[1] + yellow_width + (lane_width / 2)
-    #elif found_w:
-    #  lane_center = white_loc[1] - (lane_width / 2)
-    
-    #y_off = (lane_center - center) / pixels_per_cm
-    
-    
+    print('Commanded closedloop')
     return True
 
   def instruct(self, turn):
+    '''
     if self.state != DriveState.STOPPED:
       raise Exception('Must be stopped')
 
@@ -104,6 +83,9 @@ class Driver:
 
     # Move to INTERSECTION state
     self.state = DriveState.IN_INTERSECTION
+    '''
+    self.state = DriveState.FOLLOWING_LANE
+    self.awaiting_instruction = False
 
   def set_speed_limit(self, speed_limit):
     if speed_limit != self.speed_limit:

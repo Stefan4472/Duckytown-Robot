@@ -31,16 +31,18 @@ float ProximitySensor::getDistCm()
 }
 
 // TODO: MORE SOPHISTICATED
-void ProximitySensor::runCollisionAvoidance(float dx, WheelInterface* wheels)
+void ProximitySensor::runCollisionAvoidance(WheelInterface* wheels, float dX)
 {
   float fwd_dist = getDistCm();
 
+  // Turn braking override on if within minimum following distance.
   if (fwd_dist < minFollowDistanceCm)
   {
     wheels->startSpeedOverride(0);
 //    Serial.println("Overriding");
   }
-  else if (!wheels->overrideOn)
+  // Turn braking override off if it is on unneccessarily. 
+  if (wheels->overrideOn && fwd_dist >= minFollowDistanceCm)
   {
     wheels->stopSpeedOverride();
   }

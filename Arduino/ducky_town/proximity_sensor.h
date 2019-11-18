@@ -9,7 +9,7 @@ class ProximitySensor
     
   public:
     // Always leave this distance ahead of vehicle.
-    int minFollowDistanceCm = 5.0;
+    int minFollowDistanceCm = 20.0;
 
     // Inits Ping sensor to the given pin.
     void init(int pin);
@@ -17,7 +17,7 @@ class ProximitySensor
     float getDistCm();
     // Applies a PWM override if necessary to
     // maintain stopping distance.
-    void runCollisionAvoidance(float dx, WheelInterface* wheels);
+    void runCollisionAvoidance(WheelInterface* wheels, float dx);
 };
 
 #endif
