@@ -35,7 +35,7 @@ class Driver:
       input("Press Enter to continue")
       self.state = DriveState.FOLLOWING_LANE
       return
-    print('Updating driver')
+    #print('Updating driver')
     # Do nothing if stopped. Await instructions.
     #if self.state == DriveState.STOPPED:
     #  return False
@@ -59,10 +59,10 @@ class Driver:
       lane_center = (yellow[0] + white[0]) / 2.0, (yellow[1] + white[1]) / 2.0
     elif white and not yellow:
       print('Using white line')
-      lane_center = (white[0], white[1] - 1.3*(cv.LANE_WIDTH_PX / 2.0))
+      lane_center = (white[0], white[1] - cv.white_width - 1*(cv.LANE_WIDTH_PX / 2.0))
     elif yellow and not white:
       print('Using yellow line')
-      lane_center = (yellow[0], yellow[1] + 0.8*(cv.LANE_WIDTH_PX / 2.0))
+      lane_center = (yellow[0], yellow[1] + cv.yellow_width + 1*(cv.LANE_WIDTH_PX / 2.0))
     else:
       print('Couldn\'t see the lane')
       lane_center = self.old_ctr
@@ -70,14 +70,14 @@ class Driver:
       #raise Exception('Can\'t see the road')
       #return
     self.old_ctr = lane_center
-    print('Lane center at px({})'.format(lane_center))
+    #print('Lane center at px({})'.format(lane_center))
     # Resolve target in robot frame
     r_target = cv.get_position(lane_center[0], lane_center[1])
-    print('Resolved to target r({})'.format(r_target))
+    #print('Resolved to target r({})'.format(r_target))
     start_time = time.time()
     self.car.command_closedloop(r_target[0], r_target[1], 0.0)
-    print('Sending the command took {}'.format(time.time() - start_time))
-    print('Sent command')
+    #print('Sending the command took {}'.format(time.time() - start_time))
+    #print('Sent command')
     #elif found_y:
     #  lane_center = yellow_loc[1] + yellow_width + (lane_width / 2)
     #elif found_w:
