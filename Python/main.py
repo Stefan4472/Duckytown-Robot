@@ -38,14 +38,14 @@ if __name__ == '__main__':
       arduino_interface.serial_port.flush()
       if camera.frame_ready:
         start_time = time.time()
-        print('\nGot next frame, t={}'.format(time.time()))
+        #print('\nGot next frame, t={}'.format(time.time()))
         while arduino_interface.serial_port.in_waiting:
           print(arduino_interface.serial_port.readline())
         camera.get_frame(pixel_data)
         frame_time = time.time()
-        print('Copying frame took {}'.format(frame_time - start_time))
+        #print('Copying frame took {}'.format(frame_time - start_time))
         driver.update(pixel_data)
-        print('Driver update took {} seconds'.format(time.time() - frame_time))
+        #print('Driver update took {} seconds'.format(time.time() - frame_time))
         #Image.fromarray(pixel_data, 'RGB').show()
       #time.sleep(1.0)
   finally:

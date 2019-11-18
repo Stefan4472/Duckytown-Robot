@@ -7,6 +7,15 @@ from enum import Enum
 Image processing functions. Assumes camera resolution of 320*240px (320 wide, 240 tall).
 '''
 
+# Colors: (R, G, B, Tolerance)
+yellow = (254, 240, 82, 35)
+red = (255, 73, 109, 30)
+white = (254, 255, 253, 40)
+
+### SCALED FOR 640*480 IMAGE SIZE, RESCALE FOR FINAL
+img_width = 320#640
+img_height = 240#480
+
 CAMERA_RESOLUTION = (320, 240)
 
 YELLOW_RGB = (254, 240, 82)
@@ -20,14 +29,18 @@ WHITE_TOLERANCE = 40
 # Scaled for 320*240
 sample_size = 4
 pixels_per_cm = 12
-center = 160
-yellow_width = 22
 LANE_WIDTH_PX = 240
+yellow_width = 0#22
+white_width = 0#32
+start_row = int(img_height*(160/240))
+rows_checked = int(img_height*(40/240))
+start_col = 0
+cols_checked = img_width
 
-# Convert pixel position to a real-world robot position (cm x, cm y)
+
 def get_position(pixel_row, pixel_col):
-    return (20.0, (center - pixel_col) * 1.0 / pixels_per_cm)
-    
+    return (20.0, (img_width/2.0 - pixel_col) * 1.0 / pixels_per_cm)
+  
 # Defines a rectangular region of interest on an image.
 class RegionOfInterest:
   def __init__(self, row, col, width, height):
@@ -105,9 +118,6 @@ def classify_color(pixel):
   else:
     return Color.UNRECOGNIZED
     
-# Takes a pixel (red, green, blue).
-# Attempts to classify the color. Returns 'Color' value.
-# def getColor(pixel):
 def is_color(pixel, rgb, tolerance):
   # print('Checking color on rgb, tolerance {} {}'.format(rgb, tolerance))
   return True if \
@@ -190,7 +200,7 @@ YELLOW_LINE_WIDTH_PX = 22
 WHITE_LINE_WIDTH_PX = 25
 LANE_WIDTH_PX = 240
 
-def analyze_img(img):
+def _analyze_img(img):
   yellow_center, white_center, red_center = None, None, None
   # Search default regions.
   yellow_px = search_region(img, yellow_roi, Color.YELLOW)
@@ -223,7 +233,94 @@ def analyze_img(img):
   return yellow_center, white_center, red_center
 
 
+# Takes a pixel (red, green, blue).
+# Attempts to classify the color. Returns 'Color' value.
+# def getColor(pixel):
+def isColor(pixel, color):
+    if abs(pixel[0] - color[0]) < color[3] and \
+       abs(pixel[1] - color[1]) < color[3] and \
+       abs(pixel[2] - color[2]) < color[3]:
+        return True
+    return False
+
+# Given an image, return its yellow, white, and red feature points (rightmost yellow, leftmost yellow, center red)
+def analyze_img(m):
+    foundW = False
+    pYellow = []
+    pWhite = []
+    pRed = []
+    rLeft = []
+    rRight = []
+
+    for i in range(start_row, start_row+rows_checked-1, 4):
+        for j in range(start_col+cols_checked-4, start_col-1, -4):
+            if not pYellow and isColor(m[i][j], yellow):
+                pYellow = [i, j]    
+            if not pWhite and isColor(m[i][j], white) and not foundW:
+                foundW = True
+            if foundW and not isColor(m[i][j], white):
+                pWhite = [i, j]
+                foundW = False
+                return pYellow, pWhite, pRed
+            if rRight and not rLeft and not isColor(m[i][j], red):
+                rLeft = [i, j]
+                pRed = [int((rRight[0]+rLeft[0])/2), int((rRight[1]+rLeft[1])/2)]
+            if not rRight and isColor(m[i][j], red):
+                rRight = [i, j]
+            if pYellow and pWhite:
+                break
+    print(pYellow, ':', pWhite, ':', rLeft, rRight)
+    return pYellow, pWhite, pRed
+  
+def inferCenter(fYellow, fWhite):
+    if fYellow and fWhite:
+        return (fWhite[1]+fYellow[1])/2
+    elif fWhite and not fYellow:
+        return fWhite[1] - LANE_WIDTH_PX/2
+    elif fYellow and not fWhite:
+        return fYellow[1] + LANE_WIDTH_PX/2
+    else:
+        return None
+
 if __name__ == '__main__':
+  # load image for testing
+
+  im = Image.open('640p2.jpg')
+  m = np.array(im)
+  yc, wc, rc = analyze_img(m)
+  print(yc, wc, rc)
+
+  ctr = inferCenter(yc, wc)
+  if ctr:
+      rTarget = get_position(ctr)
+      print("rw target:", rTarget)
+  else:
+      print("no features found")
+      pass
+
+  clr = (0, 0, 0)
+  if yc:
+    m[yc[0]][yc[1]] = clr
+    m[yc[0]][yc[1]+2] = clr
+    m[yc[0]+2][yc[1]] = clr
+    m[yc[0]+2][yc[1]+2] = clr
+  if wc:
+    m[wc[0]][wc[1]] = clr
+    m[wc[0]][wc[1]+2] = clr
+    m[wc[0]+2][wc[1]] = clr
+    m[wc[0]+2][wc[1]+2] = clr
+  if rc:
+    m[rc[0]][rc[1]] = clr
+    m[rc[0]][rc[1]+2] = clr
+    m[rc[0]+2][rc[1]] = clr
+    m[rc[0]+2][rc[1]+2] = clr
+  img = Image.fromarray(m, 'RGB')
+  img.show()
+
+#"""  
+#elapsed_time = timeit.timeit(test, number=100)/100
+#print(elapsed_time)
+'''
   if len(sys.argv) == 2:
     img_path = sys.argv[1]
     print('Analyzing image {}'.format(img_path))
@@ -271,4 +368,4 @@ if __name__ == '__main__':
     draw_square(img, int(lane_center[0]), int(lane_center[1]), (255, 255, 255), 10)
     
   Image.fromarray(img, 'RGB').show()
-  
+ '''
