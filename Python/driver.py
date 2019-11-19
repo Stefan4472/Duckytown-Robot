@@ -87,5 +87,5 @@ class Driver:
 
   def set_speed_limit(self, speed_limit):
     if speed_limit != self.speed_limit:
-      #self.car.command_speed_limit(speed_limit)  # TODO: IMPLEMENT
+      self.car.set_speed_limit(speed_limit)
       self.speed_limit = speed_limit

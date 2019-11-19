@@ -95,14 +95,13 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
       response->seqNum = request->seqNum;
       return true;
 
+    // SET_SPEEDLIMIT command
+    case static_cast<int>(PiToArduinoCmd::SET_SPEEDLIMIT):
+      wheelInterface.setSpeedLimit(request->arg1);
+      return false;
+      
     // SET_MOTORS command
     case static_cast<int>(PiToArduinoCmd::SET_MOTORS):
-      //      Serial.println("Commanding PWMs");
-      //      Serial.print((int) request->arg1);
-      //      Serial.print('/');
-      //      Serial.print((int) request->arg2);
-      //      Serial.println();
-//      Serial.println("Turning off open-loop control");
       // Turn off the controller (if any)
       currController = NULL;
       wheelInterface.commandPWMs((int) request->arg1, (int) request->arg2);

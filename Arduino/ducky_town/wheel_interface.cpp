@@ -119,7 +119,6 @@ bool WheelInterface::commandSpeeds(float leftCmPerSec, float rightCmPerSec)
 //   right_pwm = maxRightPWM;
 //   left_pwm = right_pwm * l_to_r; 
 //  }
-  
   return commandPWMs(left_pwm, right_pwm);
 }
 
@@ -136,9 +135,10 @@ void WheelInterface::startSpeedOverride(float cmPerSec)
 {
   overrideOn = true;
 
+  // Calculate the required PWMs
   currLeftPWM = boundLeftPWM(leftPWMFromSpeed(cmPerSec));
   currRightPWM = boundRightPWM(rightPWMFromSpeed(cmPerSec));
-
+  // Set motors.
   this->motorShield.setM1Speed(currLeftPWM);
   this->motorShield.setM2Speed(currRightPWM);
 }
@@ -146,7 +146,7 @@ void WheelInterface::startSpeedOverride(float cmPerSec)
 void WheelInterface::stopSpeedOverride()
 {
   overrideOn = false;
-  
+  // Restore last commanded PWMs
   this->motorShield.setM1Speed(lastCommandedLeftPWM);
   this->motorShield.setM2Speed(lastCommandedRightPWM);
 

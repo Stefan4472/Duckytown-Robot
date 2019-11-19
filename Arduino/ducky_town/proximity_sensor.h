@@ -9,7 +9,7 @@ class ProximitySensor
     
   public:
     // Always leave this distance ahead of vehicle.
-    int minFollowDistanceCm = 5.0;
+    int minFollowDistanceCm = 25.0;
 
     // Inits Ping sensor to the given pin.
     void init(int pin);
