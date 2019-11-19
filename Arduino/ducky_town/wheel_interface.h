@@ -6,6 +6,7 @@
 #define MAX_PWM 400
 #define MIN_PWM -400
 
+// USES PINS 12, 10, 9, 8, 7, AND 4
 class WheelInterface
 {
   private:

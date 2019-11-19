@@ -34,14 +34,20 @@ float ProximitySensor::getDistCm()
 void ProximitySensor::runCollisionAvoidance(float dx, WheelInterface* wheels)
 {
   float fwd_dist = getDistCm();
+  
 
+  // Turn on override.
   if (fwd_dist < minFollowDistanceCm)
   {
-    wheels->startSpeedOverride(0);
-//    Serial.println("Overriding");
+    //wheels->startSpeedOverride(0);
+    wheels->commandPWMs(0, 0);
+    Serial.println("Overriding (dist " + String(fwd_dist) + ")");
   }
-  else if (!wheels->overrideOn)
+  // Turn off override.
+  if (fwd_dist >= minFollowDistanceCm && wheels->overrideOn)
   {
+    //Serial.println("Override off");
     wheels->stopSpeedOverride();
   }
+  
 }

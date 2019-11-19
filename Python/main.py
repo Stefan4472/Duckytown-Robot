@@ -1,7 +1,7 @@
 import time
 import numpy as np
 from arduino_interface import ArduinoInterface
-from driver import Driver
+from driver import Driver, DriveState
 from navigator import Navigator
 from picam_interface import Camera
 from PIL import Image
@@ -33,7 +33,7 @@ if __name__ == '__main__':
       #arduino_interface.serial_port.flush()
       
       # Send the next instruction if driver is waiting.
-      if driver.awaiting_instruction:
+      if driver.state == DriveState.AWAITING_INSTRUCTION:
         if segment_start_time:
           print('This segment had an average control rate of {} hz'.\
                 format(num_driver_updates * 1.0 / (time.time() - segment_start_time)))
