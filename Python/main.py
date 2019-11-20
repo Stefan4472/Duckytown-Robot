@@ -14,7 +14,7 @@ num_driver_updates = 0
 
 if __name__ == '__main__':
   arduino_interface = ArduinoInterface('/dev/ttyACM0', 115200, timeout=1.0)
-  camera = Camera(framerate=10)
+  camera = Camera(framerate=20)
   driver = Driver(arduino_interface)
   navigator = Navigator()  # TODO: PROVIDE MAP
   # navigator.plan_route(...)
@@ -33,7 +33,7 @@ if __name__ == '__main__':
       #arduino_interface.serial_port.flush()
       
       # Send the next instruction if driver is waiting.
-      if driver.state == DriveState.AWAITING_INSTRUCTION:
+      if driver.needs_instruction:
         if segment_start_time:
           print('This segment had an average control rate of {} hz'.\
                 format(num_driver_updates * 1.0 / (time.time() - segment_start_time)))
