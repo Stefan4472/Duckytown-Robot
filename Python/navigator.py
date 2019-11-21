@@ -3,6 +3,7 @@ from networkx import DiGraph
 from networkx import shortest_path
 from networkx import NodeNotFound
 
+
 class TurnType(Enum):
   LEFT = 1,
   RIGHT = 2,
@@ -56,9 +57,9 @@ class Navigator:
 	def get_next_path(self):
 		curr = self.curr_instruction
 		try:
-			print("NEW PATH from {} to {}".format(self.route[curr], self.route[curr+1]))
+			# print("NEW PATH from {} to {}".format(self.route[curr], self.route[curr+1]))
 			self.path = shortest_path(self.graph, source=self.route[curr], target=self.route[curr+1])
-			print(self.path)
+			# print(self.path)
 		except NodeNotFound:
 			return []
 
@@ -74,7 +75,7 @@ class Navigator:
 	def get_next_instruction(self):
 		# time.sleep(1)
 		if self.finished_path():
-			print("finished_path")
+			# print("finished_path")
 			self.curr_instruction += 1
 			if self.finished_route():
 				return None

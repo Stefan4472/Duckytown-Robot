@@ -4,6 +4,7 @@
 #include "Arduino.h"
 #include "packet_defs.h"
 
+// USES PINS 0 AND 1
 class SerialInterface
 {
   public:

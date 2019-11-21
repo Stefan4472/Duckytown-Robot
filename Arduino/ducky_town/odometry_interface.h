@@ -12,6 +12,7 @@ const float WHEEL_CIRCUMFERENCE_CM = 2.0 * PI * WHEEL_RADIUS_CM;
 // Distance from center of wheel axis to "yoke" (control point)
 #define CHASSIS_LENGTH_CM 12.0
 
+// USES PINS 2, 3, 5 AND 11
 class OdometryInterface
 {
   private:

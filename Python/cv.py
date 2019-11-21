@@ -21,10 +21,12 @@ CAMERA_RESOLUTION = (320, 240)
 YELLOW_RGB = (254, 240, 82)
 RED_RGB = (255, 73, 109)
 WHITE_RGB = (254, 255, 253)
+GREEN_RGB = (120, 190, 150) # TODO: 
 
 YELLOW_TOLERANCE = 75
-RED_TOLERANCE = 30
+RED_TOLERANCE = 70
 WHITE_TOLERANCE = 40
+GREEN_TOLERANCE = 70 # TODO
 
 # Scaled for 320*240
 sample_size = 4
@@ -49,6 +51,17 @@ class RegionOfInterest:
     self.width = width
     self.height = height
   
+  def move(self, dr, dc):
+    self.row += dr
+    self.col += dc
+
+  def recenter(self, center_row, center_col):
+    self.row = center_row - int(self.height / 2.0)
+    self.col = center_col - int(self.width / 2.0)
+    
+  def get_center(self):
+    return (self.row + int(self.height / 2.0), self.col + int(self.width / 2.0))
+    
   def __repr__(self):
     return 'RegionOfInterest({}, {}, {}, {})'.format(self.row, self.col, self.width, self.height)
 
@@ -89,6 +102,7 @@ white_backup_roi = RegionOfInterest(70, 155, 165, 100)
 red_roi = RegionOfInterest(100, 150, 40, 40)
 red_backup_roi = RegionOfInterest(130, 150, 45, 100)
 catastrophic_roi = RegionOfInterest(0, 0, CAMERA_RESOLUTION[0], CAMERA_RESOLUTION[1])
+green_roi = RegionOfInterest(100, 70, 120, 40)  # TODO
 
 # Possible colors
 class Color(Enum):
@@ -96,7 +110,7 @@ class Color(Enum):
   YELLOW = 1
   WHITE = 2
   RED = 3
-  # GREEN = 4
+  GREEN = 4
 
 def get_color_params(color):
   if color == Color.YELLOW:
@@ -105,6 +119,8 @@ def get_color_params(color):
     return RED_RGB, RED_TOLERANCE
   elif color == Color.WHITE:
     return WHITE_RGB, WHITE_TOLERANCE
+  elif color == Color.GREEN:
+    return GREEN_RGB, GREEN_TOLERANCE
   else:
     raise ValueError('Invalid color')
 
@@ -115,6 +131,8 @@ def classify_color(pixel):
     return Color.WHITE
   elif is_color(pixel, RED_RGB, RED_TOLERANCE):
     return Color.RED
+  elif is_color(pixel, GREEN_RGB, GREEN_TOLERANCE):
+    return Color.GREEN
   else:
     return Color.UNRECOGNIZED
     
@@ -200,6 +218,7 @@ YELLOW_LINE_WIDTH_PX = 22
 WHITE_LINE_WIDTH_PX = 25
 LANE_WIDTH_PX = 240
 
+# NOT IN USE CURRENTLY
 def _analyze_img(img):
   yellow_center, white_center, red_center = None, None, None
   # Search default regions.
@@ -261,15 +280,15 @@ def analyze_img(m):
             if foundW and not isColor(m[i][j], white):
                 pWhite = [i, j]
                 foundW = False
-                return pYellow, pWhite, pRed
-            if rRight and not rLeft and not isColor(m[i][j], red):
-                rLeft = [i, j]
-                pRed = [int((rRight[0]+rLeft[0])/2), int((rRight[1]+rLeft[1])/2)]
-            if not rRight and isColor(m[i][j], red):
-                rRight = [i, j]
+                #return pYellow, pWhite, pRed
+            #if rRight and not rLeft and not isColor(m[i][j], red):
+            #    rLeft = [i, j]
+            #    pRed = [int((rRight[0]+rLeft[0])/2), int((rRight[1]+rLeft[1])/2)]
+            #if not rRight and isColor(m[i][j], red):
+            #    rRight = [i, j]
             if pYellow and pWhite:
                 break
-    print(pYellow, ':', pWhite, ':', rLeft, rRight)
+    #print(pYellow, ':', pWhite, ':', rLeft, rRight)
     return pYellow, pWhite, pRed
   
 def inferCenter(fYellow, fWhite):

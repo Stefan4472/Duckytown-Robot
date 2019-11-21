@@ -22,6 +22,12 @@ class ArduinoInterface:
         # Return values
         return (parsed_packet.arg1, parsed_packet.arg2, parsed_packet.arg3)
 
+    def set_speed_limit(self, cm_per_sec):
+        self.seq_num += 1
+        send_packet = PiToArduinoPacket(PiToArduinoCmd.SET_SPEEDLIMIT, \
+            self.seq_num, cm_per_sec)
+        self.serial_port.write(bytes(send_packet.to_byte_string()))
+        
     def command_motor_pwms(self, left, right):
         self.seq_num += 1
         # Construct the packet

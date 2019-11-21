@@ -18,7 +18,7 @@ void ClosedLoopController::update(OdometryInterface* odometry, WheelInterface* w
   if(simpleControl)   
   {
     float theta_error = targetY;
-    Serial.println("ERROR: " + String(targetY));
+//    Serial.println("ERROR: " + String(targetY));
 //    float theta_error = -targetTheta; // may be flipped
     float theta_dot_error = odometry->dTheta;
 //    theta_dot_error = 0.0;
