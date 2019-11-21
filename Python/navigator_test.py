@@ -12,7 +12,7 @@ def test_route(route):
 		print(instruct)
 
 
-# test_route(1,5,10)
+test_route((1,5,10))
 # start_time = time.time()
 # for i in range(100):
 # 	test_route((6,9))

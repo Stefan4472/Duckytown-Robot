@@ -1,7 +1,7 @@
 from enum import Enum
 from networkx import DiGraph	
 from networkx import shortest_path
-from networkx import NodeNotFound
+
 
 
 class TurnType(Enum):
@@ -60,7 +60,7 @@ class Navigator:
 			# print("NEW PATH from {} to {}".format(self.route[curr], self.route[curr+1]))
 			self.path = shortest_path(self.graph, source=self.route[curr], target=self.route[curr+1])
 			# print(self.path)
-		except NodeNotFound:
+		except:
 			return []
 
 
