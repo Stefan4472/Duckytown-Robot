@@ -17,6 +17,7 @@ class Navigator:
 		self.curr_instruction = 0 # instruction in the current route
 		self.path_instruction = 0 # instruction in the current path (path is between each node in the route)
 		self.get_next_path()
+    self.route_finished = False
 
 
 	def init_graph(self):
