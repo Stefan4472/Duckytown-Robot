@@ -1,7 +1,6 @@
 from enum import Enum
 from networkx import DiGraph	
 from networkx import shortest_path
-from networkx import NodeNotFound
 
 
 class TurnType(Enum):
