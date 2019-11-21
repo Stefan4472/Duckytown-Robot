@@ -7,96 +7,107 @@ from navigator import TurnType
 
 # States that the driver can be in.
 class DriveState(Enum):
-  IN_INTERSECTION = 1
-  FOLLOWING_LANE = 2
-  APPROACHING_STOP = 3
-  STOPPED = 4
-
-# TODO: DETERMINE CORRECT RADII
-LEFT_TURN_RADIUS = 10.0
+  STOPPED = 1
+  #WAITING_FOR_GREEN = 2
+  ROLLING_INTO_INTERSECTION = 2
+  IN_INTERSECTION = 3
+  FOLLOWING_LANE = 4
+  APPROACHING_STOP = 5
+  
+LEFT_TURN_RADIUS = 14.0
 RIGHT_TURN_RADIUS = 5.0
+
+ROLL_DIST_CM = 5.0
 
 class Driver:
   def __init__(self, arduino_interface):
     self.car = arduino_interface
     self.speed_limit = 10.0
+    
     self.state = DriveState.STOPPED
+    
+    self.needs_instruction = True
+    self.next_turn = None
+    
     self.red_roi = cv.red_roi
     self.green_roi = cv.green_roi
-    self.needs_instruction = True
-
+    
   def update(self, image):
     if self.needs_instruction:
       print('Driver needs instruction!')
       return
       
-    #start_time = time.time()
-    
-    # Get center coordinates *in pixels*
-    yellow, white, stop = cv.analyze_img(image)
-    
-    # Get stop using RegionOfInterest code
+    # Do nothing if in the intersection--will just be waiting for
+    # the openloop command to finish.
+    if self.state == DriveState.ROLLING_INTO_INTERSECTION or
+       self.state == DriveState.IN_INTERSECTION:
+      return
+      
+    # Look for Stop using RegionOfInterest code
     red = cv.search_region(image, self.red_roi, cv.Color.RED)
     
-    #analyze_time = time.time()
-    #print('Analyzing image took {}'.format(analyze_time - start_time))
-    #print(yellow, white, stop)
-  
-    # Stop seen while driving.
-    if red and self.state != DriveState.APPROACHING_STOP:
-      self.state = DriveState.APPROACHING_STOP
-      print('Stop seen for the first time')
-      cv.draw_region(image, self.red_roi, (255, 255, 255))
-      cv.draw_square(image, self.red_roi.get_center()[0], self.red_roi.get_center()[1], (255, 255, 255), 5)
-      Image.fromarray(image, 'RGB').show()
-      return
-    # Stop seen and in APPROACHING_STOP: track red
-    elif red:
-      print('APPROACHING STOP')
-      # Get stop center.
-      start_red, end_red = cv.get_color_extent_vt(image, red[0], red[1])
-      red_center = start_red[0] + int((end_red[0] - start_red[0]) / 2.0), red[1]
-      # Center red region on the center of the red line
-      self.red_roi.recenter(red_center[0], red_center[1])
-      print('Centered roi to {}, {}'.format(red_center[0], red_center[1]))
-      
-      # Stop if the center is below a certain line of the image
-      if self.red_roi.get_center()[0] > 120:
-        self.car.command_motor_pwms(0, 0)
-        self.state = DriveState.STOPPED
-        self.needs_instruction = True
+    # TODO: SIMPLIFY CODE: HAVE ONE IF STATEMENT FOR EACH STATE
+    
+    # Stop line seen
+    if red:
+      # Currently following lane: transition to APPROACHING_STOP
+      if self.state == DriveState.FOLLOWING_LANE:
+        self.state = DriveState.APPROACHING_STOP
+        print('Stop seen for the first time')
         
-        # DEBUGGING FOR NOW
-        green = cv.search_region(image, self.green_roi, cv.Color.GREEN, box_size=1, step_rows=1, step_cols=1)
-        if green:
-          print('Found green')
-          cv.draw_square(image, green[0], green[1], (0, 0, 0), 10)
-        else:
-          print('Did not see green')
+        # Debugging
         cv.draw_region(image, self.red_roi, (255, 255, 255))
         cv.draw_square(image, self.red_roi.get_center()[0], self.red_roi.get_center()[1], (255, 255, 255), 5)
-        # Center green ROI to center of red ROI
-        self.green_roi.recenter(self.red_roi.get_center()[0], self.red_roi.get_center()[1])
+        Image.fromarray(image, 'RGB').show()
+      
+      # Currently approaching stop: track the stop line as it gets closer
+      if self.state == DriveState.APPROACHING_STOP:
+        print('APPROACHING STOP')
+        # Get stop center.
+        start_red, end_red = cv.get_color_extent_vt(image, red[0], red[1])  # TODO: GET WHOLE REGION OF RED?
+        red_center = start_red[0] + int((end_red[0] - start_red[0]) / 2.0), red[1]
+        
+        # Center red ROI on the center of the red line
+        self.red_roi.recenter(red_center[0], red_center[1])
+        print('Centered roi to {}, {}'.format(red_center[0], red_center[1]))
+        
+        # Stop if the center is below a certain line of the image
+        if self.red_roi.get_center()[0] > 120:
+          self.car.command_motor_pwms(0, 0)
+          self.state = DriveState.STOPPED
+          # Center green ROI to the center of the red ROI
+          self.green_roi.recenter(self.red_roi.get_center()[0], self.red_roi.get_center()[1])
+          self.needs_instruction = True
+          
+          # Debugging
+          Image.fromarray(image, 'RGB').show()
+          
+    # Currently stopped: check for green.
+    if self.state == DriveState.STOPPED and not self.needs_instruction:
+      # Carefully search for green
+      green = cv.search_region(image, self.green_roi, cv.Color.GREEN, box_size=1, step_rows=1, step_cols=1)
+      
+      # Green seen: start rolling into intersection
+      if green:
+        self.state = DriveState.ROLLING_INTO_INTERSECTION
+        self.car.command_openloop_straight(self.speed_limit, \
+            ROLL_DIST_CM, listener=self._on_openloop_finished)
+        print('Found green')
+        # Reset red ROIs
+        self.red_roi = cv.red_roi
+        
+        # Debugging
+        cv.draw_square(image, green[0], green[1], (0, 0, 0), 10)
+        cv.draw_region(image, self.red_roi, (255, 255, 255))
+        cv.draw_square(image, self.red_roi.get_center()[0], self.red_roi.get_center()[1], (255, 255, 255), 5)
         cv.draw_region(image, self.green_roi, (255, 255, 0))
         Image.fromarray(image, 'RGB').show()
-        # Reset red ROI
-        self.red_roi = cv.red_roi
         return
-        
-    '''
-    # Look for green if STOPPED
-    if self.state == DriveState.STOPPED:  # TODO: BETTER STATE MACHINE
-      green = cv.search_region(image, self.green_roi, cv.Color.GREEN, step_rows = 5, step_cols=5)
-      if green:
-        print('Found green')
-        cv.draw_region(image, self.green_roi, (255, 255, 255))
-        cv.draw_square(image, green[0], green[1], (0, 0, 0), 10)
-        Image.fromarray(image, 'RGB').show()
-        self.green_roi = cv.green_roi
-      #  self.state = 
-    '''
+
     
-    '''
+    # Get lane center coordinates *in pixels*
+    yellow, white, _ = cv.analyze_img(image)
+
     # Get lane center
     lane_center = None
     if yellow and white:
@@ -127,29 +138,34 @@ class Driver:
     r_target = cv.get_position(lane_center[0], lane_center[1])
     # Send command.
     self.car.command_closedloop(r_target[0], r_target[1], 0.0)
-    '''
     
+  def _on_openloop_finished(self):
+    # Rolling is finished: command the next turn
+    if self.state == DriveState.ROLLING_INTO_INTERSECTION:
+      self.state = DriveState.IN_INTERSECTION
+      
+      if self.next_turn == TurnType.LEFT:
+        self.car.command_openloop_lcurve(\
+          self.speed_limit, LEFT_TURN_RADIUS, PI / 2.0)
+      elif turn == TurnType.RIGHT:
+        self.car.command_openloop_rcurve(\
+          self.speed_limit, RIGHT_TURN_RADIUS, PI / 2.0)
+      elif turn == TurnType.STRAIGHT:
+        self.car.command_openloop_straight(self.speed_limit, 10.0)
+      else:
+        raise ValueError('next_turn is invalid (must be of type \'TurnType\')')
+    # Intersection turn is finished: start lane following
+    elif self.state == DriveState.IN_INTERSECTION:
+      self.state = DriveState.FOLLOWING_LANE
+      
   def instruct(self, turn):
-    if not self.needs_instruction:
-      raise Exception('Must be stopped')
-
-    # Apply openloop command based on the TurnType.
-    if turn == TurnType.LEFT:
-      self.car.command_openloop_lcurve(\
-        self.speed_limit, LEFT_TURN_RADIUS, PI / 2.0)
-    elif turn == TurnType.RIGHT:
-      self.car.command_openloop_rcurve(\
-        self.speed_limit, RIGHT_TURN_RADIUS, PI / 2.0)
-    elif turn == TurnType.STRAIGHT:
-      #self.car.command_openloop_straight(self.speed_limit)
-      #print('Commanded openloop straight')
-      pass
+    if self.needs_instruction:
+      self.next_turn = turn
+      self.needs_instruction = False
     else:
-      raise ValueError('Invalid turn (must be of type TurnType)')
-    self.needs_instruction = False
-    self.state = DriveState.IN_INTERSECTION
+      raise Exception('Doesn\'t want an instruction')
     
   def set_speed_limit(self, speed_limit):
     if speed_limit != self.speed_limit:
-      self.car.set_speed_limit(speed_limit)
       self.speed_limit = speed_limit
+      self.car.set_speed_limit(speed_limit)
