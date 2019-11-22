@@ -16,7 +16,7 @@ if __name__ == '__main__':
   arduino_interface = ArduinoInterface('/dev/ttyACM0', 115200, timeout=1.0)
   camera = Camera(framerate=20)
   driver = Driver(arduino_interface)
-  navigator = Navigator()  # TODO: PROVIDE MAP
+  navigator = Navigator((1, 5, 10))  # TODO: PROVIDE MAP
   # navigator.plan_route(...)
 
   camera.start()

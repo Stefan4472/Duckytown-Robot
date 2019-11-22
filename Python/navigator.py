@@ -16,7 +16,7 @@ class Navigator:
 		self.curr_instruction = 0 # instruction in the current route
 		self.path_instruction = 0 # instruction in the current path (path is between each node in the route)
 		self.get_next_path()
-    self.route_finished = False
+		self.route_finished = False
 
 
 	def init_graph(self):
@@ -72,6 +72,8 @@ class Navigator:
 
 
 	def get_next_instruction(self):
+		return TurnType.STRAIGHT
+		'''
 		# time.sleep(1)
 		if self.finished_path():
 			# print("finished_path")
@@ -88,3 +90,4 @@ class Navigator:
 
 		edge_Data = self.graph.get_edge_data(start, end)
 		return (edge_Data["Turn"], edge_Data["Speed"])
+		'''
