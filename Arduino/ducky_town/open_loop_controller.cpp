@@ -11,7 +11,7 @@ void OpenLoopController::update(OdometryInterface* odometry, WheelInterface* whe
   // Stop the motors if we've travelled the desired distance.
   if (targetDistance != 0.0 && abs(distanceTravelled) >= abs(targetDistance))
   {
-    Serial.println("Finished, reached target " + String(targetDistance));
+//    Serial.println("Finished, reached target " + String(targetDistance));
     wheels->commandPWMs(0, 0);
     finished = true;
   }

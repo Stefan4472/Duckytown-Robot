@@ -33,7 +33,8 @@ enum class ArduinoToPiRsp   // TODO: THREE LONGS
   INVALID_SYNTAX = 3,
   ILLEGIBLE_PACKET = 4,
   ODOMETRY = 5,
-  TICKS = 6
+  TICKS = 6,
+  CONTROL_FINISHED = 7
   //MOTOR_ERROR = 3
 };
 

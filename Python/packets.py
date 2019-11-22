@@ -41,7 +41,8 @@ class ArduinoToPiRsp(Enum):
   CMD_1 = 1
   CMD_2 = 2
   CMD_3 = 3
-  CMD_GET_TICKS = 6
+  #CMD_GET_TICKS = 6
+  CONTROL_FINISHED = 7
 
 class ArduinoToPiPacket:
   # Parses Arduino->Pi packet from the given byte array.

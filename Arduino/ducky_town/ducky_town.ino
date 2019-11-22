@@ -23,6 +23,8 @@ ProximitySensor proximitySensor;
 unsigned long lastLoop;
 unsigned long lastControllerUpdate;
 #define CONTROLLER_UPDATE_PERIOD_MS 100
+// Sequence number of the last open/closed loop control packet received.
+int lastControlSeqnum;
 
 void setup()
 {
@@ -63,6 +65,18 @@ void loop()
   {
     currController->update(&odometryInterface, &wheelInterface);
     lastControllerUpdate = curr_time;
+
+    // Send CONTROL_FINISHED packet
+    if (currController->finished)
+    {
+      send_packet.commandID = static_cast<int>(ArduinoToPiRsp::CONTROL_FINISHED);
+      send_packet.arg1 = 0.0;
+      send_packet.arg2 = 0.0;
+      send_packet.arg3 = 0.0;
+      send_packet.seqNum = lastControlSeqnum;
+      serialInterface.sendPacket(&send_packet);
+      lastControlSeqnum = -1;
+    }
   }
 
   // Check distance and limit speed, if necessary
@@ -130,37 +144,30 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
 
     // SET_OPENLOOP_STRAIGHT command
     case static_cast<int>(PiToArduinoCmd::SET_OPENLOOP_STRAIGHT):
-//      Serial.println("Running straight line, target = " + String(request->arg2));
+      lastControlSeqnum = request->seqNum;
       openLoopController.commandStraight(request->arg1, request->arg2, &wheelInterface);
-//      Serial.println("Turning on open-loop control");
       currController = &openLoopController;
       return false;
 
     // SET_OPENLOOP_R_CURVE command
     case static_cast<int>(PiToArduinoCmd::SET_OPENLOOP_R_CURVE):
-//      Serial.println("Running right curve, target = " + String(request->arg3));
+      lastControlSeqnum = request->seqNum;
       openLoopController.commandRightTurn(request->arg1, request->arg2, request->arg3, &wheelInterface);
-//      Serial.println("Turning on open-loop control");
       currController = &openLoopController;
       return false;
 
     // SET_OPENLOOP_R_CURVE command
     case static_cast<int>(PiToArduinoCmd::SET_OPENLOOP_L_CURVE):
-//      Serial.println("Running left curve, target = " + String(request->arg3));
+      lastControlSeqnum = request->seqNum;
       openLoopController.commandLeftTurn(request->arg1, request->arg2, request->arg3, &wheelInterface);
-//      Serial.println("Turning on open-loop control");
       currController = &openLoopController;
       return false; 
 
     // SET_CLOSEDLOOP command  TODO: CURRENTLY RELATIVE
     case static_cast<int>(PiToArduinoCmd::SET_CLOSEDLOOP):
-//      Serial.println("Rel " + String(request->arg1) + ", " + String(request->arg2) + ", " + String(request->arg3));
-//      Serial.println("Abs " + String(12.0 + odometryInterface.x + request->arg1) + ", " + String(odometryInterface.y + request->arg2) + ", " + String(request->arg3));
-      //      Serial.println("Running left curve, target = " + String(request->arg3));
+      lastControlSeqnum = request->seqNum;
       closedLoopController.commandPosition(12.0 + odometryInterface.x + request->arg1,-request->arg2,
-//                                              odometryInterface.y - request->arg2, 
                                               request->arg3);
-//      Serial.println("Turning on closed-loop control");
       currController = &closedLoopController;
       return false;
 
