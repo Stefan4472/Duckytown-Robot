@@ -26,11 +26,8 @@ if __name__ == '__main__':
   
   try:
     while True:
-      while arduino_interface.serial_port.in_waiting:
-        print(arduino_interface.serial_port.readline())
-        
-      # Clear serial port.
-      #arduino_interface.serial_port.flush()
+      # Process the serial port.
+      arduino_interface.process_buffer()
       
       # Send the next instruction if driver is waiting.
       if driver.needs_instruction:
