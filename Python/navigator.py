@@ -2,8 +2,6 @@ from enum import Enum
 from networkx import DiGraph	
 from networkx import shortest_path
 
-
-
 class TurnType(Enum):
   LEFT = 1,
   RIGHT = 2,
@@ -11,7 +9,7 @@ class TurnType(Enum):
 
   
 class Navigator:
-	def __init__(self, route):  # TODO: THIS IS JUST A SKELETON RIGHT NOW. ALWAYS RETURNS STRAIGHT
+	def __init__(self, route): 
 		self.graph = DiGraph()
 		self.init_graph()
 		self.route = route
