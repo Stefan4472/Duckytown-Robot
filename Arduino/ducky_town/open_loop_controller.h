@@ -4,6 +4,15 @@
 #include "icontroller.h"
 #include "odometry_interface.h"
 #include "wheel_interface.h"
+#include "lights_interface.h"
+
+enum OpenControlType
+{
+  NONE,
+  STRAIGHT,
+  LEFT,
+  RIGHT
+};
 
 class OpenLoopController : public IController
 {
@@ -13,13 +22,16 @@ class OpenLoopController : public IController
     float targetDistance;
     // Distance travelled so far this command.
     float distanceTravelled;
+    // Last type of control applied.
+    OpenControlType lastControl = OpenControlType::NONE;
 
   public:  // TODO: CAN THIS HANDLE NEGATIVE SPEEDS?
-    void update(OdometryInterface* odometry, WheelInterface* wheels);
+    void init();
+    void update(OdometryInterface* odometry, WheelInterface* wheels, LightsInterface* lights);
     // Provide target == 0.0 for no target
     void commandStraight(float cmPerSec, float targetDistCm, WheelInterface* wheels);  // TODO: A COMMANDPOSITION FUNCTION
-    void commandRightTurn(float cmPerSec, float turnRadius, float targetRad, WheelInterface* wheels);
-    void commandLeftTurn(float cmPerSec, float turnRadius, float targetRad, WheelInterface* wheels);
+    void commandRightTurn(float cmPerSec, float turnRadius, float targetRad, WheelInterface* wheels, LightsInterface* lights);
+    void commandLeftTurn(float cmPerSec, float turnRadius, float targetRad, WheelInterface* wheels, LightsInterface* lights);
 };
 
 #endif

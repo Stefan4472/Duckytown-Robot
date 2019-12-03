@@ -7,6 +7,7 @@
 #include "open_loop_controller.h"
 #include "closed_loop_controller.h"
 #include "proximity_sensor.h"
+#include "lights_interface.h"
 
 SerialInterface serialInterface;
 WheelInterface wheelInterface;
@@ -15,14 +16,13 @@ OpenLoopController openLoopController;
 ClosedLoopController closedLoopController;
 IController* currController;
 ProximitySensor proximitySensor;
+LightsInterface lightsInterface;
 
-// TODO: RUN AT A HIGHER BAUD RATE
 #define BAUD_RATE 115200
 #define PING_PIN 6
 
+// Timestamp of the last loop() run.
 unsigned long lastLoop;
-unsigned long lastControllerUpdate;
-#define CONTROLLER_UPDATE_PERIOD_MS 100
 // Sequence number of the last open/closed loop control packet received.
 int lastControlSeqnum;
 
@@ -32,9 +32,11 @@ void setup()
   odometryInterface.init();
   wheelInterface.init();
   proximitySensor.init(PING_PIN);
+  closedLoopController.init();
+  openLoopController.init();
   lastLoop = millis();
-  lastControllerUpdate = lastLoop;
   wheelInterface.setSpeedLimit(10.0);
+  lightsInterface.init(14, 15);
 }
 
 void loop()
@@ -47,7 +49,7 @@ void loop()
   // Process any queued packets.
   while (serialInterface.getNextPacket(&recv_packet))
   {
-//    Serial.println("Got packet at " + String(millis()));
+    // Serial.println("Got packet at " + String(millis()));
     // Handle the request and send a response if requested.
     if (handleRequest(&recv_packet, &send_packet))
     {
@@ -61,10 +63,9 @@ void loop()
   odometryInterface.update();
 
   // Update controller, if one is set.
-  if (currController && !currController->finished && curr_time - lastControllerUpdate >= CONTROLLER_UPDATE_PERIOD_MS)
+  if (currController)
   {
-    currController->update(&odometryInterface, &wheelInterface);
-    lastControllerUpdate = curr_time;
+    currController->update(&odometryInterface, &wheelInterface, &lightsInterface);
 
     // Send CONTROL_FINISHED packet
     if (currController->finished)
@@ -76,11 +77,19 @@ void loop()
       send_packet.seqNum = lastControlSeqnum;
       serialInterface.sendPacket(&send_packet);
       lastControlSeqnum = -1;
+      // Clear the reference.
+      currController = NULL;
     }
   }
 
   // Check distance and limit speed, if necessary
   proximitySensor.runCollisionAvoidance(odometryInterface.dX, &wheelInterface);
+
+  // Update wheel interface.
+  wheelInterface.update(&lightsInterface);
+  
+  // Update lights
+  lightsInterface.update();
 
   // Print readings once every 1000 ms.
   ms_since_print += curr_time - lastLoop;
@@ -94,10 +103,12 @@ void loop()
   lastLoop = curr_time;
 }
 
-// TODO: MOTOR_ERROR
-// Returns whether to send the response.
+// TODO: MOTOR_ERROR?
+// Handles receiving a PiToArduinoPacket (request). Fills in the 'response' 
+// packet and returns whether it should be sent.
 bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
 {
+  // Handle the possible commandIDs.
   switch (static_cast<int>(request->commandID))
   {
     // ECHO command
@@ -123,11 +134,9 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
 
     // GET_ODOMETRY command
     case static_cast<int>(PiToArduinoCmd::GET_ODOMETRY):
-      long x, y;
-      float theta;
       response->commandID = static_cast<int>(ArduinoToPiRsp::ODOMETRY);
-      response->arg1 = (float) odometryInterface.x;
-      response->arg2 = (float) odometryInterface.y;
+      response->arg1 = odometryInterface.x;
+      response->arg2 = odometryInterface.y;
       response->arg3 = odometryInterface.theta;
       response->seqNum = request->seqNum;
       return true;
@@ -152,22 +161,24 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
     // SET_OPENLOOP_R_CURVE command
     case static_cast<int>(PiToArduinoCmd::SET_OPENLOOP_R_CURVE):
       lastControlSeqnum = request->seqNum;
-      openLoopController.commandRightTurn(request->arg1, request->arg2, request->arg3, &wheelInterface);
+      openLoopController.commandRightTurn(request->arg1, request->arg2, request->arg3, &wheelInterface, &lightsInterface);
+      lightsInterface.startRightBlinker();
       currController = &openLoopController;
       return false;
 
-    // SET_OPENLOOP_R_CURVE command
+    // SET_OPENLOOP_L_CURVE command
     case static_cast<int>(PiToArduinoCmd::SET_OPENLOOP_L_CURVE):
       lastControlSeqnum = request->seqNum;
-      openLoopController.commandLeftTurn(request->arg1, request->arg2, request->arg3, &wheelInterface);
+      openLoopController.commandLeftTurn(request->arg1, request->arg2, request->arg3, &wheelInterface, &lightsInterface);
+      lightsInterface.startRightBlinker();
       currController = &openLoopController;
       return false; 
 
-    // SET_CLOSEDLOOP command  TODO: CURRENTLY RELATIVE
+    // SET_CLOSEDLOOP command  TODO: CURRENTLY ONLY USES THE Y PARAMETER
     case static_cast<int>(PiToArduinoCmd::SET_CLOSEDLOOP):
       lastControlSeqnum = request->seqNum;
-      closedLoopController.commandPosition(12.0 + odometryInterface.x + request->arg1,-request->arg2,
-                                              request->arg3);
+      closedLoopController.commandPosition(12.0 + odometryInterface.x + request->arg1, -request->arg2,
+                                           request->arg3);
       currController = &closedLoopController;
       return false;
 
