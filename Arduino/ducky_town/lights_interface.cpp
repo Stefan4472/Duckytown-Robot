@@ -1,4 +1,4 @@
-#include "lights.h"
+#include "lights_interface.h"
 #include "Arduino.h"
 
 void LightsInterface::init(int leftPin, int rightPin)
@@ -9,31 +9,34 @@ void LightsInterface::init(int leftPin, int rightPin)
 
 void LightsInterface::update()
 {
-  // Brake is on: nothing to update.
+  // Brake is on: nothing to update. The LEDs should 
+  // already be on.
   if (brakeOn)
   {
 
   }
-  // Left blinker on.
+  // Brake off, left blinker on.
   else if (blinkerState == BlinkerState::BLINKING_LEFT)
   {
     unsigned long curr_time = millis();
-    // Toggle the light. Make sure to handle the case
-    // where the brake "covered" up the blinker.
-    while (curr_time - lastBlinkMs >= BLINK_PERIOD_MS)
+
+    // Toggle the light.
+    if (curr_time - lastBlinkMs >= BLINK_PERIOD_MS)
     {
       digitalWrite(leftPin, !digitalRead(leftPin));
+      lastBlinkMs = curr_time;
     }
   }
-  // Right blinker on.
+  // Brake off, right blinker on.
   else if (blinkerState == BlinkerState::BLINKING_RIGHT)
   {
     unsigned long curr_time = millis();
-    // Toggle the light. Make sure to handle the case
-    // where the brake "covered" up the blinker.
-    while (curr_time - lastBlinkMs >= BLINK_PERIOD_MS)
+
+    // Toggle the light. 
+    if (curr_time - lastBlinkMs >= BLINK_PERIOD_MS)
     {
       digitalWrite(rightPin, !digitalRead(rightPin));
+      lastBlinkMs = curr_time;
     }
   }
 }
@@ -46,6 +49,7 @@ void LightsInterface::startLeftBlinker()
   {
     digitalWrite(rightPin, LOW);
   }
+
   blinkerState = BlinkerState::BLINKING_LEFT;
   digitalWrite(leftPin, HIGH);
   lastBlinkMs = millis();
@@ -67,12 +71,30 @@ void LightsInterface::stopLeftBlinker()
 
 void LightsInterface::startRightBlinker()
 {
-
+  // Turn off left blinker, unless the brake is on
+  if (blinkerState == BlinkerState::BLINKING_LEFT &&
+      !brakeOn)
+  {
+    digitalWrite(leftPin, LOW);
+  }
+  
+  blinkerState = BlinkerState::BLINKING_RIGHT;
+  digitalWrite(rightPin, HIGH);
+  lastBlinkMs = millis();
 }
 
 void LightsInterface::stopRightBlinker()
 {
-
+  if (blinkerState == BlinkerState::BLINKING_RIGHT)
+  {
+    blinkerState = BlinkerState::NOT_BLINKING;
+    
+    // Turn off, unless brake is eganged
+    if (!brakeOn)
+    {
+      digitalWrite(rightPin, LOW);
+    }
+  }  
 }
 
 void LightsInterface::startBrakeLight()

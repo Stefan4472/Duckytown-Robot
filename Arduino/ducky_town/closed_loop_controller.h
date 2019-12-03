@@ -4,6 +4,7 @@
 #include "icontroller.h"
 #include "odometry_interface.h"
 #include "wheel_interface.h"
+#include "lights_interface.h"
 
 class ClosedLoopController : public IController
 {
@@ -12,10 +13,9 @@ class ClosedLoopController : public IController
     float speedLim;
 
   public:
-    void update(OdometryInterface* odometry, WheelInterface* wheels);
+    void init();
+    void update(OdometryInterface* odometry, WheelInterface* wheels, LightsInterface* lights);
     void commandPosition(float x, float y, float theta);
-    void (*onConvergedFcn)() = NULL;
-    void setThetaControl(float speed_lim, float theta_rel);
 };
 
 #endif

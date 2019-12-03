@@ -2,6 +2,7 @@
 #define WHEEL_INTERFACE_H
 
 #include "DualMC33926MotorShield.h"
+#include "lights_interface.h"
 
 #define MAX_PWM 400
 #define MIN_PWM -400
@@ -13,7 +14,6 @@ class WheelInterface
     // MotorShield
     DualMC33926MotorShield motorShield;
 
-  public:
     // PWM limits (based on speed limit and motor limits).
     // Initialize to motor limits.
     int maxRightPWM = MAX_PWM, maxLeftPWM = MAX_PWM;
@@ -34,9 +34,12 @@ class WheelInterface
   public:
     int currLeftPWM, currRightPWM;  // TODO: PROVIDE CURRLEFTSPEED, CURRRIGHTSPEED INSTEAD(?)
     int lastCommandedLeftPWM, lastCommandedRightPWM;
+    float speedAtLastUpdate;
     bool overrideOn = false;
 
     bool init();
+    void update(LightsInterface* lights);
+    
     // Sets raw PWM inputs to left and right motors
     bool commandPWMs(int leftPWM, int rightPWM);
 
