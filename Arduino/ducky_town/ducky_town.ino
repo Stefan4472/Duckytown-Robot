@@ -26,6 +26,15 @@ unsigned long lastLoop;
 // Sequence number of the last open/closed loop control packet received.
 int lastControlSeqnum;
 
+bool sendStatistics;
+int statisticsSeqnum;
+int statisticsPeriodMs;
+unsigned long lastStatisticsPacket = 0;
+
+unsigned int packetsProcessed = 0;
+unsigned int msProcessingPackets = 0;
+unsigned int numControlLoops = 0;
+
 void setup()
 {
   serialInterface.init(BAUD_RATE);
@@ -49,16 +58,20 @@ void loop()
   // Process any queued packets.
   while (serialInterface.getNextPacket(&recv_packet))
   {
-    // Serial.println("Got packet at " + String(millis()));
+    unsigned long process_start = millis();
+     //Serial.println("Got packet at " + String(millis()));
     // Handle the request and send a response if requested.
     if (handleRequest(&recv_packet, &send_packet))
     {
       serialInterface.sendPacket(&send_packet);
     }
+    packetsProcessed++;
+    msProcessingPackets += millis() - process_start;
+//    Serial.println("Finished processing packet at " + String(millis()));
   }
 
   curr_time = millis();
-
+  
   // Update odometry
   odometryInterface.update();
 
@@ -92,15 +105,26 @@ void loop()
   lightsInterface.update();
 
   // Print readings once every 1000 ms.
-  ms_since_print += curr_time - lastLoop;
-  if (ms_since_print > 500)
+//  ms_since_print += curr_time - lastLoop;
+//  if (ms_since_print > 5000)
+//  {
+//    Serial.println("Processed " + String(packetsProcessed) + " in " + String(msProcessingPackets));
+//    Serial.println("Ran " + String(numControlLoops) + " in " + String(millis()) + " milliseconds");
+//    ms_since_print = 0;
+//  }
+
+  if (sendStatistics && curr_time - lastStatisticsPacket > statisticsPeriodMs)
   {
-    //float dist = proximitySensor.getDistCm();
-    //Serial.println("Proximity sensor reads " + String(dist) + " cm");
-    ms_since_print = 0;
+    send_packet.commandID = static_cast<int>(ArduinoToPiRsp::STATISTICS);
+    send_packet.arg1 = (millis() * 1.0 / numControlLoops);
+    send_packet.arg2 = (msProcessingPackets * 1.0 / packetsProcessed);
+    send_packet.seqNum = statisticsSeqnum;
+    serialInterface.sendPacket(&send_packet);
+    lastStatisticsPacket = curr_time;
   }
 
   lastLoop = curr_time;
+  numControlLoops++;
 }
 
 // TODO: MOTOR_ERROR?
@@ -182,6 +206,13 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
       currController = &closedLoopController;
       return false;
 
+    // TURN_STATISTICS_ON command
+    case static_cast<int>(PiToArduinoCmd::TURN_STATISTICS_ON):
+      sendStatistics = true;
+      statisticsSeqnum = request->seqNum;
+      statisticsPeriodMs = 10000; //(int) request->arg1;
+      return false;
+      
     // Unrecognized/unsupported commandID
     default:
       response->commandID = static_cast<int>(ArduinoToPiRsp::UNRECOGNIZED_COMMAND);

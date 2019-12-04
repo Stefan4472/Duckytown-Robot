@@ -5,6 +5,8 @@ void LightsInterface::init(int leftPin, int rightPin)
 {
   this->leftPin = leftPin;
   this->rightPin = rightPin;
+  pinMode(leftPin, OUTPUT);
+  pinMode(rightPin, OUTPUT);
 }
 
 void LightsInterface::update()

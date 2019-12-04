@@ -12,6 +12,10 @@ IMAGE_HEIGHT = 240
 segment_start_time = None
 num_driver_updates = 0
 
+def _receive_statistics(msPerLoop, msPerPacket, arg3):
+  print('Received statistics {} ms per loop, {} ms per packet'.format(msPerLoop, msPerPacket))
+  
+  
 if __name__ == '__main__':
   arduino_interface = ArduinoInterface('/dev/ttyACM0', 115200, timeout=1.0)
   camera = Camera(framerate=20)
@@ -23,6 +27,7 @@ if __name__ == '__main__':
   time.sleep(2)
   driver.set_speed_limit(10.0)
   pixel_data = np.empty(shape=(IMAGE_HEIGHT, IMAGE_WIDTH, 3), dtype='uint8')
+  arduino_interface.turn_statistics_on(10, _receive_statistics)
   
   try:
     while True:
@@ -48,8 +53,12 @@ if __name__ == '__main__':
         
       # Run next control update if a frame is ready.
       if camera.frame_ready:
+        print('Frame ready at time {}'.format(time.time()))
+        start_time = time.time()
         camera.get_frame(pixel_data)
         driver.update(pixel_data)
+        end_time = time.time()
+        print('Update loop took {} seconds'.format(end_time - start_time))
         num_driver_updates += 1
         
   finally:

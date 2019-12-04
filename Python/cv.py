@@ -21,19 +21,19 @@ CAMERA_RESOLUTION = (320, 240)
 YELLOW_RGB = (254, 240, 82)
 RED_RGB = (255, 73, 109)
 WHITE_RGB = (254, 255, 253)
-GREEN_RGB = (120, 190, 150) # TODO: 
+GREEN_RGB = (251, 254, 247)
 
 YELLOW_TOLERANCE = 75
 RED_TOLERANCE = 70
 WHITE_TOLERANCE = 40
-GREEN_TOLERANCE = 70 # TODO
+GREEN_TOLERANCE = 50 # TODO
 
 # Scaled for 320*240
 sample_size = 4
 pixels_per_cm = 12
 LANE_WIDTH_PX = 240
-yellow_width = 0#22
-white_width = 0#32
+yellow_width = 0
+white_width = 0
 start_row = int(img_height*(160/240))
 rows_checked = int(img_height*(40/240))
 start_col = 0
@@ -102,7 +102,7 @@ white_backup_roi = RegionOfInterest(70, 155, 165, 100)
 red_roi = RegionOfInterest(100, 150, 40, 40)
 red_backup_roi = RegionOfInterest(130, 150, 45, 100)
 catastrophic_roi = RegionOfInterest(0, 0, CAMERA_RESOLUTION[0], CAMERA_RESOLUTION[1])
-green_roi = RegionOfInterest(100, 70, 120, 40)  # TODO
+green_roi = RegionOfInterest(100, 70, 160, 60)  # TODO
 
 # Possible colors
 class Color(Enum):

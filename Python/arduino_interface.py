@@ -19,7 +19,7 @@ class ArduinoInterface:
     else:
       while self.serial_port.in_waiting >= 14:
         bytes_read = self.serial_port.read(14)
-        print('Got bytes {}'.format(bytes_read))
+        #print('Got bytes {}'.format(bytes_read))
         read_packet = ArduinoToPiPacket(bytes_read)
         # Look up whether there is a registered callback function
         if read_packet.seq_num in self.callbacks:
@@ -29,7 +29,7 @@ class ArduinoInterface:
 
   # Creates and sends the packet. Also registers the callback function.
   def send_packet(self, command_id, arg1=0.0, arg2=0.0, arg3=0.0, callback_fcn=None):
-    print('Sending packet')
+    #print('Sending packet')
     # Increment and save sequence number
     self.seq_num += 1
     seq_num = self.seq_num
@@ -74,3 +74,6 @@ class ArduinoInterface:
   def command_closedloop(self, rx, ry, rtheta, callback=None):
       self.send_packet(PiToArduinoCmd.CLOSEDLOOP, arg1=rx, arg2=ry, \
           arg3=rtheta)
+          
+  def turn_statistics_on(self, period_sec, callback=None):
+      self.send_packet(PiToArduinoCmd.TURN_STATISTICS_ON, arg1=period_sec, callback_fcn=callback)

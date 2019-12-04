@@ -13,6 +13,7 @@ class PiToArduinoCmd(Enum):
   OPENLOOP_L_CURVE = 9
   CLOSEDLOOP = 10
   RESET_ODOMETRY = 11
+  TURN_STATISTICS_ON = 12
 
 # TODO: PREAMBLES?
 class PiToArduinoPacket:
@@ -43,6 +44,7 @@ class ArduinoToPiRsp(Enum):
   CMD_3 = 3
   #CMD_GET_TICKS = 6
   CONTROL_FINISHED = 7
+  STATISTICS = 8
 
 class ArduinoToPiPacket:
   # Parses Arduino->Pi packet from the given byte array.

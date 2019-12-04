@@ -31,12 +31,14 @@ class Driver:
     
     self.red_roi = cv.red_roi
     self.green_roi = cv.green_roi
+    self.green_roi.recenter(*self.red_roi.get_center())
     
   def update(self, image):
     if self.needs_instruction:
       print('Driver needs instruction!')
       return
       
+    #print('Driver in state {}'.format(self.state))
     if self.state == DriveState.FOLLOWING_LANE:
       # Look for Stop using RegionOfInterest code
       red = cv.search_region(image, self.red_roi, cv.Color.RED)
@@ -47,12 +49,19 @@ class Driver:
         self.state = DriveState.APPROACHING_STOP
         print('Stop seen for the first time')
         
+        # Get stop center.
+        start_red, end_red = cv.get_color_extent_vt(image, red[0], red[1])
+        red_center = start_red[0] + int((end_red[0] - start_red[0]) / 2.0), red[1]
+        # Center red ROI on the center of the red line
+        self.red_roi.recenter(red_center[0], red_center[1])
+
         # Debugging
         cv.draw_region(image, self.red_roi, (255, 255, 255))
         cv.draw_square(image, self.red_roi.get_center()[0], self.red_roi.get_center()[1], (255, 255, 255), 5)
         Image.fromarray(image, 'RGB').show()
-        # Call another update to run in APPROACHING_STOP
-        self.update(image)
+        return
+                # Call another update to run in APPROACHING_STOP
+        #self.update(image)
       # No stop: continue lane-following
       else:
         # Get lane center coordinates *in pixels*
@@ -73,7 +82,10 @@ class Driver:
         # No lane seen while following lane: use previous point.
         if lane_center is None and self.state == DriveState.FOLLOWING_LANE:
           #print('Couldn\'t see the lane')  # TODO: TIMEOUT IF CAN'T SEE THE LANE FOR MORE THAN X SECONDS
-          lane_center = self.old_ctr
+          try:
+            lane_center = self.old_ctr
+          except:
+            pass
         # No lane seen while in intersection: do nothing (let open loop continue)
         elif lane_center is None and self.state == DriveState.IN_INTERSECTION:
           print('Continuing open-loop')
@@ -92,6 +104,12 @@ class Driver:
     # Currently approaching stop: track the stop line as it gets closer
     elif self.state == DriveState.APPROACHING_STOP:
       print('APPROACHING STOP')
+      red = cv.search_region(image, self.red_roi, cv.Color.RED)
+      if not red:
+        print('Cant find red')
+        cv.draw_region(image, self.red_roi, (255, 255, 255))
+        cv.draw_square(image, self.red_roi.get_center()[0], self.red_roi.get_center()[1], (255, 255, 255), 5)
+        Image.fromarray(image, 'RGB').show()
       # Get stop center.
       start_red, end_red = cv.get_color_extent_vt(image, red[0], red[1])  # TODO: GET WHOLE REGION OF RED?
       red_center = start_red[0] + int((end_red[0] - start_red[0]) / 2.0), red[1]
@@ -113,7 +131,8 @@ class Driver:
         
     # Currently stopped: check for green.  
     elif self.state == DriveState.STOPPED:
-      green = cv.search_region(image, self.green_roi, cv.Color.GREEN, box_size=1, step_rows=1, step_cols=1)
+      print('Searching for green in {}'.format(self.green_roi))
+      green = cv.search_region(image, self.green_roi, cv.Color.GREEN, box_size=1, step_rows=2, step_cols=2)
       
       # Green seen: start rolling into intersection
       if green:
@@ -153,7 +172,7 @@ class Driver:
       elif self.next_turn == TurnType.RIGHT:
         self.car.command_openloop_rcurve(self.speed_limit, \
             RIGHT_TURN_RADIUS, PI / 2.0, self._on_openloop_finished)
-      elif next_turn == TurnType.STRAIGHT:
+      elif self.next_turn == TurnType.STRAIGHT:
         self.car.command_openloop_straight(self.speed_limit, \
             5.0, self._on_openloop_finished)
       else:
