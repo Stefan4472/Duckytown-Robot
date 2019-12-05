@@ -68,7 +68,7 @@ class ArduinoInterface:
   def command_openloop_lcurve(self, speed, turn_radius, theta, callback=None):
       self.send_packet(PiToArduinoCmd.OPENLOOP_L_CURVE, arg1=speed, \
           arg2=turn_radius, arg3=theta, callback_fcn=callback)
-      self.serial_port.write(bytes(send_packet.to_byte_string()))
+      #self.serial_port.write(bytes(self.send_packet.to_byte_string()))
 
   # Sends a closed-loop command with the given robot coordinates (x, y, theta)
   def command_closedloop(self, rx, ry, rtheta, callback=None):

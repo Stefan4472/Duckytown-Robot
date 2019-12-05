@@ -95,7 +95,7 @@ void loop()
       serialInterface.sendPacket(&send_packet);
       lastControlSeqnum = -1;
       // Clear the reference.
-      currController = NULL;
+      //currController = NULL;
     }
   }
 

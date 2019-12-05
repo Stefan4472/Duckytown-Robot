@@ -17,14 +17,15 @@ class DriveState(Enum):
 LEFT_TURN_RADIUS = 14.0
 RIGHT_TURN_RADIUS = 5.0
 
-ROLL_DIST_CM = 28.0 #5
+ROLL_DIST_CM = 28.0+8.0 #5
 
 class Driver:
   def __init__(self, arduino_interface):
     self.car = arduino_interface
     self.speed_limit = 10.0
     
-    self.state = DriveState.STOPPED  # TODO: START IN LANE_FOLLOWING?
+    self.state = DriveState.FOLLOWING_LANE  # TODO: START IN LANE_FOLLOWING?
+    #self.state = DriveState.STOPPED  # TODO: START IN LANE_FOLLOWING?
     
     self.needs_instruction = True
     self.next_turn = None
@@ -58,7 +59,7 @@ class Driver:
         # Debugging
         cv.draw_region(image, self.red_roi, (255, 255, 255))
         cv.draw_square(image, self.red_roi.get_center()[0], self.red_roi.get_center()[1], (255, 255, 255), 5)
-        Image.fromarray(image, 'RGB').show()
+        #Image.fromarray(image, 'RGB').show()
         return
                 # Call another update to run in APPROACHING_STOP
         #self.update(image)
@@ -77,7 +78,7 @@ class Driver:
           lane_center = (white[0], white[1] - cv.white_width - 1*(cv.LANE_WIDTH_PX / 2.0))
         elif yellow and not white:
           print('Using yellow line')
-          lane_center = (yellow[0], yellow[1] + cv.yellow_width + 1*(cv.LANE_WIDTH_PX / 2.0))
+          lane_center = (yellow[0], yellow[1] + cv.yellow_width + 10 + 1*(cv.LANE_WIDTH_PX / 2.0))
         
         # No lane seen while following lane: use previous point.
         if lane_center is None and self.state == DriveState.FOLLOWING_LANE:
@@ -97,12 +98,19 @@ class Driver:
     # Currently approaching stop: track the stop line as it gets closer
     elif self.state == DriveState.APPROACHING_STOP:
       print('APPROACHING STOP')
+      ################################################ I'm just going to nuke this part for now
+      self.car.command_motor_pwms(0, 0)
+      self.state = DriveState.STOPPED
+      self.green_roi.recenter(self.red_roi.get_center()[0], self.red_roi.get_center()[1])
+      self.needs_instruction = True
+      pass
+      ##########################################################################################
       red = cv.search_region(image, self.red_roi, cv.Color.RED)
       if not red:
         print('Cant find red')
         cv.draw_region(image, self.red_roi, (255, 255, 255))
         cv.draw_square(image, self.red_roi.get_center()[0], self.red_roi.get_center()[1], (255, 255, 255), 5)
-        Image.fromarray(image, 'RGB').show()
+        #Image.fromarray(image, 'RGB').show()
       # Get stop center.
       start_red, end_red = cv.get_color_extent_vt(image, red[0], red[1])  # TODO: GET WHOLE REGION OF RED?
       red_center = start_red[0] + int((end_red[0] - start_red[0]) / 2.0), red[1]
@@ -120,7 +128,7 @@ class Driver:
         self.needs_instruction = True
         
         # Debugging
-        Image.fromarray(image, 'RGB').show()
+        ###Image.fromarray(image, 'RGB').show()
         
     # Currently stopped: check for green.  
     elif self.state == DriveState.STOPPED:
@@ -132,9 +140,9 @@ class Driver:
         print('Found green')
         #self.car.command_openloop_straight(self.speed_limit, \
         #    ROLL_DIST_CM, self._on_openloop_finished)     # TODO: THIS WILL GET CEILINGED BY THE OVERALL SPEEDLIMIT
+        self.state = DriveState.ROLLING_INTO_INTERSECTION
         self.car.command_openloop_straight(20.0, \
             ROLL_DIST_CM, self._on_openloop_finished)
-        self.state = DriveState.ROLLING_INTO_INTERSECTION
         # Reset red ROI
         self.red_roi = cv.red_roi
         
@@ -143,7 +151,7 @@ class Driver:
         cv.draw_region(image, self.red_roi, (255, 255, 255))
         cv.draw_square(image, self.red_roi.get_center()[0], self.red_roi.get_center()[1], (255, 255, 255), 5)
         cv.draw_region(image, self.green_roi, (255, 255, 0))
-        Image.fromarray(image, 'RGB').show()
+        #Image.fromarray(image, 'RGB').show()
         
     # Do nothing: wait for openloop to finish
     elif self.state == DriveState.ROLLING_INTO_INTERSECTION:

@@ -27,7 +27,7 @@ if __name__ == '__main__':
   time.sleep(2)
   driver.set_speed_limit(10.0)
   pixel_data = np.empty(shape=(IMAGE_HEIGHT, IMAGE_WIDTH, 3), dtype='uint8')
-  arduino_interface.turn_statistics_on(10, _receive_statistics)
+  #arduino_interface.turn_statistics_on(10, _receive_statistics)
   
   try:
     while True:
@@ -46,7 +46,7 @@ if __name__ == '__main__':
           break
           
         # Wait for input before starting next segment (debugging)
-        input('Press enter to trigger next instruction')
+        #input('Press enter to trigger next instruction')
         driver.instruct(navigator.get_next_instruction())
         segment_start_time = time.time()
         num_driver_updates = 1
