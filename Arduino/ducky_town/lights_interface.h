@@ -6,9 +6,9 @@
 
 enum BlinkerState
 {
+  NOT_BLINKING,
   BLINKING_LEFT,
-  BLINKING_RIGHT,
-  NOT_BLINKING
+  BLINKING_RIGHT  
 };
 
 /*
@@ -47,6 +47,8 @@ class LightsInterface
     // Start/stop brake light.
     void startBrakeLight();
     void stopBrakeLight();
+    bool getBrakeState();
+    BlinkerState getBlinkerState();
 };
 
 #endif

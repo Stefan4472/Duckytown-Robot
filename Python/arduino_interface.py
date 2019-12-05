@@ -57,15 +57,15 @@ class ArduinoInterface:
   # def get_ticks(self, callback):
   #   self.send_packet(PiToArduinoCmd.CMD_GET_TICKS, callback_fcn=callback)
 
-  def command_openloop_straight(self, speed, distance=0.0, callback=None):
+  def command_openloop_straight(self, speed, distance, callback=None):
     self.send_packet(PiToArduinoCmd.OPENLOOP_STRAIGHT, arg1=speed, \
         arg2=distance, callback_fcn=callback)
 
-  def command_openloop_rcurve(self, speed, turn_radius, theta=0.0, callback=None):
+  def command_openloop_rcurve(self, speed, turn_radius, theta, callback=None):
       self.send_packet(PiToArduinoCmd.OPENLOOP_R_CURVE, arg1=speed, \
           arg2=turn_radius, arg3=theta, callback_fcn=callback)
 
-  def command_openloop_lcurve(self, speed, turn_radius, theta=0.0, callback=None):
+  def command_openloop_lcurve(self, speed, turn_radius, theta, callback=None):
       self.send_packet(PiToArduinoCmd.OPENLOOP_L_CURVE, arg1=speed, \
           arg2=turn_radius, arg3=theta, callback_fcn=callback)
       self.serial_port.write(bytes(send_packet.to_byte_string()))

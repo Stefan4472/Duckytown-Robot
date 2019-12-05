@@ -30,3 +30,11 @@ void ClosedLoopController::commandPosition(float x, float y, float theta)
   targetTheta = theta;
   finished = false;
 }
+
+void ClosedLoopController::cancel(LightsInterface* lights)
+{
+  if (!finished)
+  {
+    finished = true;
+  }
+}

@@ -16,6 +16,7 @@ class ClosedLoopController : public IController
     void init();
     void update(OdometryInterface* odometry, WheelInterface* wheels, LightsInterface* lights);
     void commandPosition(float x, float y, float theta);
+    void cancel(LightsInterface* lights);
 };
 
 #endif

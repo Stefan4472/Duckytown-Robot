@@ -81,12 +81,16 @@ void WheelInterface::update(LightsInterface* lights)
   // Calculate current speed from PWM values.
   float curr_speed = (leftSpeedFromPWM(currLeftPWM) + rightSpeedFromPWM(currRightPWM)) / 2.0;
 
-  if (curr_speed = 0.0 || curr_speed < speedAtLastUpdate)
+//  Serial.println("Curr_speed is " + String(curr_speed) + ", last_speed is " + String(speedAtLastUpdate));
+//  Serial.println("Brake state is " + String(lights->getBrakeState()));
+  if ((curr_speed == 0.0 || curr_speed < speedAtLastUpdate) && !lights->getBrakeState())
   {
+//    Serial.println("Starting brake light");
     lights->startBrakeLight();
   }
-  else if (curr_speed > speedAtLastUpdate)
+  else if ((curr_speed > speedAtLastUpdate) && lights->getBrakeState())
   {
+//    Serial.println("Stopping brake light");
     lights->stopBrakeLight();
   }
   
@@ -125,7 +129,7 @@ bool WheelInterface::commandStraightSpeed(float cmPerSec)
   return commandPWMs(leftPWMFromSpeed(cmPerSec), rightPWMFromSpeed(cmPerSec));
 }
 
-bool WheelInterface::commandSpeeds(float leftCmPerSec, float rightCmPerSec)
+bool WheelInterface::commandSpeeds(float leftCmPerSec, float rightCmPerSec)  // TODO: THIS CLASS NEEDS CLEANUP
 {
 //  Serial.println("Commanding speeds " + String(leftCmPerSec) + ", " + String(rightCmPerSec));
   int left_pwm = leftPWMFromSpeed(leftCmPerSec);
@@ -172,8 +176,10 @@ void WheelInterface::stopSpeedOverride()
 {
   overrideOn = false;
   // Restore last commanded PWMs
+  currLeftPWM = lastCommandedLeftPWM;
+  currRightPWM = lastCommandedRightPWM;
   this->motorShield.setM1Speed(lastCommandedLeftPWM);
   this->motorShield.setM2Speed(lastCommandedRightPWM);
-
+  
 
 }

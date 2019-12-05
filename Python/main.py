@@ -53,7 +53,7 @@ if __name__ == '__main__':
         
       # Run next control update if a frame is ready.
       if camera.frame_ready:
-        print('Frame ready at time {}'.format(time.time()))
+        #print('Frame ready at time {}'.format(time.time()))
         start_time = time.time()
         camera.get_frame(pixel_data)
         driver.update(pixel_data)

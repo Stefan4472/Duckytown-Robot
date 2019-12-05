@@ -32,6 +32,7 @@ class OpenLoopController : public IController
     void commandStraight(float cmPerSec, float targetDistCm, WheelInterface* wheels);  // TODO: A COMMANDPOSITION FUNCTION
     void commandRightTurn(float cmPerSec, float turnRadius, float targetRad, WheelInterface* wheels, LightsInterface* lights);
     void commandLeftTurn(float cmPerSec, float turnRadius, float targetRad, WheelInterface* wheels, LightsInterface* lights);
+    void cancel(LightsInterface* lights);
 };
 
 #endif

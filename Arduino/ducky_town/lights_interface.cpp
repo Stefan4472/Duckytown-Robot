@@ -11,6 +11,7 @@ void LightsInterface::init(int leftPin, int rightPin)
 
 void LightsInterface::update()
 {
+//  Serial.println("Brake = " + String(brakeOn) + ", blinker = " + String(blinkerState));
   // Brake is on: nothing to update. The LEDs should 
   // already be on.
   if (brakeOn)
@@ -111,4 +112,14 @@ void LightsInterface::stopBrakeLight()
   brakeOn = false;
   digitalWrite(leftPin, LOW);
   digitalWrite(rightPin, LOW);
+}
+
+bool LightsInterface::getBrakeState()
+{
+  return brakeOn;
+}
+
+BlinkerState LightsInterface::getBlinkerState()
+{
+  return blinkerState;
 }

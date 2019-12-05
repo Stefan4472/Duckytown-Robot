@@ -44,8 +44,11 @@ void setup()
   closedLoopController.init();
   openLoopController.init();
   lastLoop = millis();
-  wheelInterface.setSpeedLimit(10.0);
+  wheelInterface.setSpeedLimit(15.0);
   lightsInterface.init(14, 15);
+
+//  openLoopController.commandStraight(20, 100, &wheelInterface);
+//  currController = &openLoopController;
 }
 
 void loop()
@@ -83,6 +86,7 @@ void loop()
     // Send CONTROL_FINISHED packet
     if (currController->finished)
     {
+//      Serial.println("CURRCONTROLLER FINISHED");
       send_packet.commandID = static_cast<int>(ArduinoToPiRsp::CONTROL_FINISHED);
       send_packet.arg1 = 0.0;
       send_packet.arg2 = 0.0;
@@ -178,6 +182,7 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
     // SET_OPENLOOP_STRAIGHT command
     case static_cast<int>(PiToArduinoCmd::SET_OPENLOOP_STRAIGHT):
       lastControlSeqnum = request->seqNum;
+      closedLoopController.cancel(&lightsInterface);
       openLoopController.commandStraight(request->arg1, request->arg2, &wheelInterface);
       currController = &openLoopController;
       return false;
@@ -185,22 +190,23 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
     // SET_OPENLOOP_R_CURVE command
     case static_cast<int>(PiToArduinoCmd::SET_OPENLOOP_R_CURVE):
       lastControlSeqnum = request->seqNum;
+      closedLoopController.cancel(&lightsInterface);
       openLoopController.commandRightTurn(request->arg1, request->arg2, request->arg3, &wheelInterface, &lightsInterface);
-      lightsInterface.startRightBlinker();
       currController = &openLoopController;
       return false;
 
     // SET_OPENLOOP_L_CURVE command
     case static_cast<int>(PiToArduinoCmd::SET_OPENLOOP_L_CURVE):
       lastControlSeqnum = request->seqNum;
+      closedLoopController.cancel(&lightsInterface);
       openLoopController.commandLeftTurn(request->arg1, request->arg2, request->arg3, &wheelInterface, &lightsInterface);
-      lightsInterface.startRightBlinker();
       currController = &openLoopController;
       return false; 
 
     // SET_CLOSEDLOOP command  TODO: CURRENTLY ONLY USES THE Y PARAMETER
     case static_cast<int>(PiToArduinoCmd::SET_CLOSEDLOOP):
       lastControlSeqnum = request->seqNum;
+      openLoopController.cancel(&lightsInterface);
       closedLoopController.commandPosition(12.0 + odometryInterface.x + request->arg1, -request->arg2,
                                            request->arg3);
       currController = &closedLoopController;

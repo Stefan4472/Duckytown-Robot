@@ -8,7 +8,12 @@ void OpenLoopController::init()
 
 void OpenLoopController::update(OdometryInterface* odometry, WheelInterface* wheels, LightsInterface* lights)
 {
-//  Serial.println("OpenLoop running update()");
+  if (finished)
+  {
+    return;
+  }
+   
+  //  Serial.println("OpenLoop running update()");
 //  Serial.println("currDist = " + String(odometry->distTravelled));
 //  Serial.println("prevDist = " + String(odometry->prevDistTravelled));
   // Update tracked distance travelled.
@@ -16,12 +21,9 @@ void OpenLoopController::update(OdometryInterface* odometry, WheelInterface* whe
 //  Serial.println("distanceTravelled now " + String(distanceTravelled));
   
   // Stop the motors and finish if the desired distance has been travelled
-  if (targetDistance != 0.0 && abs(distanceTravelled) >= abs(targetDistance))
+  if (abs(distanceTravelled) >= abs(targetDistance))
   {
-//    Serial.println("Finished, reached target " + String(targetDistance));
-    wheels->commandPWMs(0, 0);
-    finished = true;
-
+//    Serial.println("Greater than targetDistance " + String(targetDistance));
     if (lastControl == OpenControlType::LEFT)
     {
       lights->stopLeftBlinker();
@@ -30,13 +32,20 @@ void OpenLoopController::update(OdometryInterface* odometry, WheelInterface* whe
     {
       lights->stopRightBlinker();
     }
+  
+//      Serial.println("Finished, reached target " + String(targetDistance));
+    wheels->commandPWMs(0, 0);
+    finished = true;
   }
 }
 
 void OpenLoopController::commandStraight(float cmPerSec, float targetDistCm, WheelInterface* wheels)
 {
   wheels->commandStraightSpeed(cmPerSec);
+  
+  distanceTravelled = 0.0;
   this->targetDistance = targetDistCm;
+  
   lastControl = OpenControlType::STRAIGHT;
   finished = false;
 }
@@ -46,10 +55,14 @@ void OpenLoopController::commandRightTurn(float cmPerSec, float turnRadius, floa
 //  Serial.println("Openloop received command to turn right");
   float left_speed = cmPerSec * (turnRadius + WHEEL_BASE_CM / 2.0) / turnRadius;
   float right_speed = cmPerSec * (turnRadius - WHEEL_BASE_CM / 2.0) / turnRadius;
+  
   // Calculate desired straight-line distance (0.0 = no target).
+  distanceTravelled = 0.0;
   targetDistance = targetRad * WHEEL_CIRCUMFERENCE_CM;
-  wheels->commandSpeeds(left_speed, right_speed);
+  
   lights->startRightBlinker();
+  wheels->commandSpeeds(left_speed, right_speed);
+  
   lastControl = OpenControlType::RIGHT;
   finished = false;
 }
@@ -59,15 +72,32 @@ void OpenLoopController::commandLeftTurn(float cmPerSec, float turnRadius, float
 //  Serial.println("Openloop received command to turn left");
   float left_speed = cmPerSec * (turnRadius - WHEEL_BASE_CM / 2.0) / turnRadius;
   float right_speed = cmPerSec * (turnRadius + WHEEL_BASE_CM / 2.0) / turnRadius;
+  //  Serial.print("Calculated speeds " + String(left_speed) + ", " + String(right_speed));
+  
   // Calculate desired straight-line distance (0.0 = no target).
+  distanceTravelled = 0.0;
   targetDistance = targetRad * WHEEL_CIRCUMFERENCE_CM;
-//  Serial.print("Calculated speeds ");
-//  Serial.print(left_speed);
-//  Serial.print(" - ");
-//  Serial.print(right_speed);
-//  Serial.println();
-  wheels->commandSpeeds(left_speed, right_speed);
+  
   lights->startLeftBlinker();
+  wheels->commandSpeeds(left_speed, right_speed);
+  
   lastControl = OpenControlType::LEFT;
   finished = false;
+}
+
+void OpenLoopController::cancel(LightsInterface* lights)
+{
+  if (!finished)
+  {
+    if (lastControl == OpenControlType::LEFT)
+    {
+      lights->stopLeftBlinker();
+    }
+    else if (lastControl == OpenControlType::RIGHT)
+    {
+      lights->stopRightBlinker();
+    }
+    
+    finished = true; 
+  }
 }
