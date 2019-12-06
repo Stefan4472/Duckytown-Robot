@@ -34,11 +34,9 @@ class WheelInterface
   public:
     int currLeftPWM, currRightPWM;  // TODO: PROVIDE CURRLEFTSPEED, CURRRIGHTSPEED INSTEAD(?)
     int lastCommandedLeftPWM, lastCommandedRightPWM;
-    float speedAtLastUpdate;
     bool overrideOn = false;
 
     bool init();
-    void update(LightsInterface* lights);
     
     // Sets raw PWM inputs to left and right motors
     bool commandPWMs(int leftPWM, int rightPWM);

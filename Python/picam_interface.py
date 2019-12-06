@@ -11,6 +11,8 @@ from threading import Thread
 import time
 import numpy as np
 
+# TODO: THIS CLASS NEEDS CLEANUP
+
 class Camera:
   def __init__(self, resolution=(320, 240), framerate=32):
     # Create and initialize the PiCamera object.
@@ -21,12 +23,13 @@ class Camera:
     self._last_frame = np.empty((resolution[1], resolution[0], 3), dtype='uint8')
     # Whether the camera is currently capturing images.
     self.running = False
-    # Sleep while the camera initializes
-    time.sleep(0.1)
     # The capture thread, which will run '_thread_capture_async()'.
     # The thread is created when 'start()' is called.
     self.capture_thread = None
 
+    # Diagnostics
+    self.frames_captured = 0
+    self.start_time = None
     # # Start!
     # self.capture_thread.start()    
 
@@ -63,15 +66,21 @@ class Camera:
     # IO stream where the raw pixel data will be stored.
     # It is stored as a Numpy array with three channels (R, G, B)
     raw_capture = PiRGBArray(self.camera, size=self.camera.resolution)
+    self.start_time = time.time()
     # Infinite capture loop.
     for frame in self.camera.capture_continuous(raw_capture, format="rgb", use_video_port=True):
-      #print('Got next frame at ms {}'.format(time.time()))
       # Copy image data to 'last_frame'
       np.copyto(self._last_frame, frame.array)
       # Clear the stream in preparation for the next frame.
       raw_capture.truncate(0)
+      self.frames_captured += 1
       self.frame_ready = True
-      # TODO: FIRE FRAME_READY() LISTENER
+
+      if self.frames_captured >= 100:
+        print('FPS over the last {} captures was {}'.format(\
+            self.frames_captured, self.frames_captured / (time.time() - self.start_time)))
+        self.frames_captured = 0
+        self.start_time = time.time()
 
     # camera_on = False
     # camera_generator = None

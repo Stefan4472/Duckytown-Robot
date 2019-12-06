@@ -33,12 +33,15 @@ class LightsInterface
     BlinkerState blinkerState = BlinkerState::NOT_BLINKING;
     // Timestamp of the last LED toggle for turn signalling.
     unsigned long lastBlinkMs;
+    // Reported robot speed at time of last update.
+    float lastSpeed;
 
   public:
     // Pins for left and right lights.
     void init(int leftPin, int rightPin);
-    // Updates light states.
-    void update();
+    // Updates light states. Takes robot's current speed 
+    // (used to control the brake lights).
+    void update(float currSpeed);
     // Start/stop turn signals.
     void startLeftBlinker();
     void stopLeftBlinker();

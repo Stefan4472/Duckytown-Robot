@@ -148,13 +148,10 @@ void OdometryInterface::resetTo(float x, float y, float theta)
   this->x = x;
   this->y = y;
   this->theta = theta;
-  this->distTravelled = 0;
+  this->distTravelled = 0.0;
 
   this->prevX = x;
   this->prevY = y;
   this->prevTheta = theta;
-  this->prevDistTravelled = 0;
-//  this->distTravelled = 0;  // TODO: HOW TO GET THESE VALUES WITHOUT RESETTING?
-//  this->distLeft = 0;
-//  this->distRight = 0;
+  this->prevDistTravelled = 0.0;
 }

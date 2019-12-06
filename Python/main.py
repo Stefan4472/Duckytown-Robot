@@ -18,14 +18,15 @@ def _receive_statistics(msPerLoop, msPerPacket, arg3):
   
 if __name__ == '__main__':
   arduino_interface = ArduinoInterface('/dev/ttyACM0', 115200, timeout=1.0)
-  camera = Camera(framerate=20)
+  camera = Camera()
   driver = Driver(arduino_interface)
   navigator = Navigator((1, 5, 10))  # TODO: PROVIDE MAP
   # navigator.plan_route(...)
 
   camera.start()
   time.sleep(2)
-  driver.set_speed_limit(10.0)
+  arduino_interface.set_speed_limit(20.0)
+  driver.set_speed_limit(15.0)  # TODO: DIFFERENTIATE BETWEEN SPEED LIMIT AND DESIRED SPEED
   pixel_data = np.empty(shape=(IMAGE_HEIGHT, IMAGE_WIDTH, 3), dtype='uint8')
   #arduino_interface.turn_statistics_on(10, _receive_statistics)
   
@@ -54,12 +55,12 @@ if __name__ == '__main__':
       # Run next control update if a frame is ready.
       if camera.frame_ready:
         #print('Frame ready at time {}'.format(time.time()))
-        start_time = time.time()
+        # start_time = time.time()
         camera.get_frame(pixel_data)
         driver.update(pixel_data)
-        end_time = time.time()
-        print('Update loop took {} seconds'.format(end_time - start_time))
-        num_driver_updates += 1
+        # end_time = time.time()
+        # print('Update loop took {} seconds'.format(end_time - start_time))
+        # num_driver_updates += 1
         
   finally:
     print('Turning off motors')

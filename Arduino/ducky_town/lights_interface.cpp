@@ -9,8 +9,20 @@ void LightsInterface::init(int leftPin, int rightPin)
   pinMode(rightPin, OUTPUT);
 }
 
-void LightsInterface::update()
+void LightsInterface::update(float currSpeed)
 {
+  bool activate_brake = (currSpeed == 0.0 || currSpeed < (lastSpeed * 0.8));
+  if (activate_brake && !brakeOn)
+  {
+    startBrakeLight();
+  }
+  else if (!activate_brake && brakeOn)
+  {
+    stopBrakeLight();
+  }
+  
+  lastSpeed = currSpeed;
+
 //  Serial.println("Brake = " + String(brakeOn) + ", blinker = " + String(blinkerState));
   // Brake is on: nothing to update. The LEDs should 
   // already be on.

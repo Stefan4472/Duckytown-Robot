@@ -9,13 +9,13 @@
 class ClosedLoopController : public IController
 {
   private:
-    float targetX, targetY, targetTheta;
-    float speedLim;
+    float thetaErr, desiredSpeed;
 
   public:
     void init();
     void update(OdometryInterface* odometry, WheelInterface* wheels, LightsInterface* lights);
-    void commandPosition(float x, float y, float theta);
+    void setSpeed(float speed);
+    void commandThetaError(float thetaError);
     void cancel(LightsInterface* lights);
 };
 

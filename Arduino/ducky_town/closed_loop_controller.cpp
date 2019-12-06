@@ -14,20 +14,21 @@ void ClosedLoopController::update(OdometryInterface* odometry, WheelInterface* w
 {
   if (!finished && millis() - lastUpdateMs >= updatePeriodMs)
   {
-    float theta_error = targetY;
     float theta_dot_error = odometry->dTheta;
 
-    float theta_ddot = -K_ROT * theta_error - B_ROT * theta_dot_error;
-    float SPEEDLIM = 15.0;
-    wheels->commandSpeeds(SPEEDLIM - theta_ddot, SPEEDLIM + theta_ddot);
+    float theta_ddot = -K_ROT * thetaErr - B_ROT * theta_dot_error;
+    wheels->commandSpeeds(desiredSpeed - theta_ddot, desiredSpeed + theta_ddot);
   }
 }
 
-void ClosedLoopController::commandPosition(float x, float y, float theta)
+void ClosedLoopController::setSpeed(float speed)
 {
-  targetX = x;
-  targetY = y;
-  targetTheta = theta;
+  desiredSpeed = speed;
+}
+
+void ClosedLoopController::commandThetaError(float thetaError)
+{
+  thetaErr = thetaError;
   finished = false;
 }
 

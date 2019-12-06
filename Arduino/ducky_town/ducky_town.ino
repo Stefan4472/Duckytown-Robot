@@ -83,10 +83,11 @@ void loop()
   {
     currController->update(&odometryInterface, &wheelInterface, &lightsInterface);
 
-    // Send CONTROL_FINISHED packet
+    // Check if controller just finished.
     if (currController->finished)
     {
 //      Serial.println("CURRCONTROLLER FINISHED");
+      // Send CONTROL_FINISHED packet
       send_packet.commandID = static_cast<int>(ArduinoToPiRsp::CONTROL_FINISHED);
       send_packet.arg1 = 0.0;
       send_packet.arg2 = 0.0;
@@ -102,11 +103,8 @@ void loop()
   // Check distance and limit speed, if necessary
   proximitySensor.runCollisionAvoidance(odometryInterface.dX, &wheelInterface);
 
-  // Update wheel interface.
-  wheelInterface.update(&lightsInterface);
-  
-  // Update lights
-  lightsInterface.update();
+  // Update tail lights.
+  lightsInterface.update(odometryInterface.dX);
 
   // Print readings once every 1000 ms.
 //  ms_since_print += curr_time - lastLoop;
@@ -117,6 +115,7 @@ void loop()
 //    ms_since_print = 0;
 //  }
 
+  // Send control statistics 
   if (sendStatistics && curr_time - lastStatisticsPacket > statisticsPeriodMs)
   {
     send_packet.commandID = static_cast<int>(ArduinoToPiRsp::STATISTICS);
@@ -207,11 +206,16 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
     case static_cast<int>(PiToArduinoCmd::SET_CLOSEDLOOP):
       lastControlSeqnum = request->seqNum;
       openLoopController.cancel(&lightsInterface);
-      closedLoopController.commandPosition(12.0 + odometryInterface.x + request->arg1, -request->arg2,
-                                           request->arg3);
+      closedLoopController.setSpeed(request->arg1);
+      closedLoopController.commandThetaError(-request->arg2);
       currController = &closedLoopController;
       return false;
 
+    // RESET_ODOMETRY command
+    case static_cast<int>(PiToArduinoCmd::RESET_ODOMETRY):
+      odometryInterface.resetTo(0.0, 0.0, 0.0);
+      return false;
+      
     // TURN_STATISTICS_ON command
     case static_cast<int>(PiToArduinoCmd::TURN_STATISTICS_ON):
       sendStatistics = true;

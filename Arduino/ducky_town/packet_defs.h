@@ -24,11 +24,11 @@ enum class PiToArduinoCmd
   SET_OPENLOOP_R_CURVE = 8,
   SET_OPENLOOP_L_CURVE = 9,
   SET_CLOSEDLOOP = 10,
-  RESET_ODOMETRY = 11, // TODO
+  RESET_ODOMETRY = 11,
   TURN_STATISTICS_ON = 12
 };
 
-enum class ArduinoToPiRsp   // TODO: THREE LONGS
+enum class ArduinoToPiRsp
 {
   ECHO = 1,
   UNRECOGNIZED_COMMAND = 2,

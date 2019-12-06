@@ -76,27 +76,6 @@ bool WheelInterface::init()
   return !this->motorShield.getFault();
 }
 
-void WheelInterface::update(LightsInterface* lights)
-{
-  // Calculate current speed from PWM values.
-  float curr_speed = (leftSpeedFromPWM(currLeftPWM) + rightSpeedFromPWM(currRightPWM)) / 2.0;
-
-//  Serial.println("Curr_speed is " + String(curr_speed) + ", last_speed is " + String(speedAtLastUpdate));
-//  Serial.println("Brake state is " + String(lights->getBrakeState()));
-  if ((curr_speed == 0.0 || curr_speed < speedAtLastUpdate) && !lights->getBrakeState())
-  {
-//    Serial.println("Starting brake light");
-    lights->startBrakeLight();
-  }
-  else if ((curr_speed > speedAtLastUpdate) && lights->getBrakeState())
-  {
-//    Serial.println("Stopping brake light");
-    lights->stopBrakeLight();
-  }
-  
-  speedAtLastUpdate = curr_speed;
-}
-
 bool WheelInterface::commandPWMs(int leftPWM, int rightPWM)
 { 
   // Serial.println("currPWM " + String(currLPWM) + ", " + String(currRPWM));

@@ -71,9 +71,12 @@ class ArduinoInterface:
       #self.serial_port.write(bytes(self.send_packet.to_byte_string()))
 
   # Sends a closed-loop command with the given robot coordinates (x, y, theta)
-  def command_closedloop(self, rx, ry, rtheta, callback=None):
-      self.send_packet(PiToArduinoCmd.CLOSEDLOOP, arg1=rx, arg2=ry, \
-          arg3=rtheta)
+  def command_closedloop(self, speed, theta_error, callback=None):
+      self.send_packet(PiToArduinoCmd.CLOSEDLOOP, arg1=speed, arg2=theta_error, \
+          callback_fcn=callback)
           
+  def reset_odometry(self):
+    self.send_packet(PiToArduinoCmd.RESET_ODOMETRY)
+    
   def turn_statistics_on(self, period_sec, callback=None):
       self.send_packet(PiToArduinoCmd.TURN_STATISTICS_ON, arg1=period_sec, callback_fcn=callback)
