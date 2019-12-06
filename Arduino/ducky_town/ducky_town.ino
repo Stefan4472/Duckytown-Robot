@@ -44,7 +44,7 @@ void setup()
   closedLoopController.init();
   openLoopController.init();
   lastLoop = millis();
-  wheelInterface.setSpeedLimit(15.0);
+  wheelInterface.setSpeedLimit(20.0);
   lightsInterface.init(14, 15);
 
 //  openLoopController.commandStraight(20, 100, &wheelInterface);
@@ -78,7 +78,7 @@ void loop()
   // Update odometry
   odometryInterface.update();
 
-  // Update controller, if one is set.
+  // Update controller, if one is set.        
   if (currController)
   {
     currController->update(&odometryInterface, &wheelInterface, &lightsInterface);
@@ -86,7 +86,7 @@ void loop()
     // Check if controller just finished.
     if (currController->finished)
     {
-//      Serial.println("CURRCONTROLLER FINISHED");
+//      Serial.println("currController finished at " + String(millis()));
       // Send CONTROL_FINISHED packet
       send_packet.commandID = static_cast<int>(ArduinoToPiRsp::CONTROL_FINISHED);
       send_packet.arg1 = 0.0;
@@ -94,9 +94,9 @@ void loop()
       send_packet.arg3 = 0.0;
       send_packet.seqNum = lastControlSeqnum;
       serialInterface.sendPacket(&send_packet);
-      lastControlSeqnum = -1;
+//      lastControlSeqnum = -1;
       // Clear the reference.
-      //currController = NULL;
+      currController = NULL;
     }
   }
 
@@ -121,6 +121,7 @@ void loop()
     send_packet.commandID = static_cast<int>(ArduinoToPiRsp::STATISTICS);
     send_packet.arg1 = (millis() * 1.0 / numControlLoops);
     send_packet.arg2 = (msProcessingPackets * 1.0 / packetsProcessed);
+    send_packet.arg3 = (float) packetsProcessed;
     send_packet.seqNum = statisticsSeqnum;
     serialInterface.sendPacket(&send_packet);
     lastStatisticsPacket = curr_time;
@@ -180,8 +181,10 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
 
     // SET_OPENLOOP_STRAIGHT command
     case static_cast<int>(PiToArduinoCmd::SET_OPENLOOP_STRAIGHT):
+//      Serial.println("Received openloop command at time " + String(millis()));
       lastControlSeqnum = request->seqNum;
       closedLoopController.cancel(&lightsInterface);
+      openLoopController.cancel(&lightsInterface);
       openLoopController.commandStraight(request->arg1, request->arg2, &wheelInterface);
       currController = &openLoopController;
       return false;
@@ -190,6 +193,7 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
     case static_cast<int>(PiToArduinoCmd::SET_OPENLOOP_R_CURVE):
       lastControlSeqnum = request->seqNum;
       closedLoopController.cancel(&lightsInterface);
+      openLoopController.cancel(&lightsInterface);
       openLoopController.commandRightTurn(request->arg1, request->arg2, request->arg3, &wheelInterface, &lightsInterface);
       currController = &openLoopController;
       return false;
@@ -198,6 +202,7 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
     case static_cast<int>(PiToArduinoCmd::SET_OPENLOOP_L_CURVE):
       lastControlSeqnum = request->seqNum;
       closedLoopController.cancel(&lightsInterface);
+      openLoopController.cancel(&lightsInterface);
       openLoopController.commandLeftTurn(request->arg1, request->arg2, request->arg3, &wheelInterface, &lightsInterface);
       currController = &openLoopController;
       return false; 
@@ -205,6 +210,7 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
     // SET_CLOSEDLOOP command  TODO: CURRENTLY ONLY USES THE Y PARAMETER
     case static_cast<int>(PiToArduinoCmd::SET_CLOSEDLOOP):
       lastControlSeqnum = request->seqNum;
+      closedLoopController.cancel(&lightsInterface);
       openLoopController.cancel(&lightsInterface);
       closedLoopController.setSpeed(request->arg1);
       closedLoopController.commandThetaError(-request->arg2);
@@ -213,6 +219,7 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
 
     // RESET_ODOMETRY command
     case static_cast<int>(PiToArduinoCmd::RESET_ODOMETRY):
+//      Serial.println("Resetting odometry");
       odometryInterface.resetTo(0.0, 0.0, 0.0);
       return false;
       

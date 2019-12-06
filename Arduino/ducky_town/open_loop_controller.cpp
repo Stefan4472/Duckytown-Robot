@@ -23,7 +23,7 @@ void OpenLoopController::update(OdometryInterface* odometry, WheelInterface* whe
   // Stop the motors and finish if the desired distance has been travelled
   if (abs(distanceTravelled) >= abs(targetDistance))
   {
-//    Serial.println("Greater than targetDistance " + String(targetDistance));
+//    Serial.println("Greater than targetDistance " + String(targetDistance) + " at time " + String(millis()));
     if (lastControl == OpenControlType::LEFT)
     {
       lights->stopLeftBlinker();
@@ -41,6 +41,7 @@ void OpenLoopController::update(OdometryInterface* odometry, WheelInterface* whe
 
 void OpenLoopController::commandStraight(float cmPerSec, float targetDistCm, WheelInterface* wheels)
 {
+//  Serial.println("Commanded straight " + String(targetDistCm) + " at speed " + String(cmPerSec));
   wheels->commandStraightSpeed(cmPerSec);
   
   distanceTravelled = 0.0;

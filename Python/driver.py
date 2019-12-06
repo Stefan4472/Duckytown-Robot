@@ -16,7 +16,7 @@ class DriveState(Enum):
 LEFT_TURN_RADIUS = 14.0
 RIGHT_TURN_RADIUS = 5.0
 
-ROLL_DIST_CM = 28.0+8.0 #5
+ROLL_DIST_CM = 22.0 #5
 
 class Driver:
   def __init__(self, arduino_interface):
@@ -54,7 +54,7 @@ class Driver:
 
     if self.start_time:
       print('Average control rate for {} was {}'.format( \
-          self.state, (time.time() - self.start_time) / self.num_updates))
+          self.state, self.num_updates / (time.time() - self.start_time)))
 
     self.state = new_state
     self.start_time = time.time()
@@ -86,7 +86,7 @@ class Driver:
         start_red, end_red = cv.get_color_extent_vt(image, red[0], red[1])
         red_center = start_red[0] + int((end_red[0] - start_red[0]) / 2.0), red[1]
         # Center green ROI on the center of the red line.
-        self.green_roi.recenter(red_center[0], red_center[1])
+        self.green_roi.recenter(*red_center)
         # Stop the car
         self.car.command_motor_pwms(0, 0)
         self.set_state(DriveState.STOPPED)
@@ -131,42 +131,61 @@ class Driver:
       # Green seen: start rolling into intersection
       if green:
         print('Found green')
+        self.debug_image(image)
         #self.car.command_openloop_straight(self.speed_limit, \
         #    ROLL_DIST_CM, self._on_openloop_finished)     # TODO: THIS WILL GET CEILINGED BY THE OVERALL SPEEDLIMIT
         self.car.reset_odometry()
-        self.car.command_openloop_straight(20.0, \
-            ROLL_DIST_CM, self._on_openloop_finished)
+        self.next_turn = TurnType.LEFT
+        rdc = 31 if self.next_turn == TurnType.LEFT else 24 # ROLL_DIST_CM, but better
+        #try:
+        #  if self.next_turn == TurnType.LEFT:
+        #    rdc = 31
+        #except:
+        #  print("turn not set")
+        #  pass
+        self.wd_timer = time.time() + 5
         self.set_state(DriveState.ROLLING_INTO_INTERSECTION)
+        self.car.command_openloop_straight(20.0, \
+            rdc, self._on_openloop_finished) # CHANGED FROM ROLL_DIST_CM TO rdc
+        
+        print('Rolling command sent at {}'.format(time.time()))
+        
         
     # ROLLING_INTO_INTERSECTION
     # Do nothing: wait for openloop to finish
     elif self.state == DriveState.ROLLING_INTO_INTERSECTION:
-      return
+      if self.wd_timer+3 < time.time():
+        self.set_state(DriveState.FOLLOWING_LANE)
+      elif self.wd_timer < time.time():
+        self.car.command_openloop_straight(20.0, 24, self._on_openloop_finished)
+      pass
       
     # IN_INTERSECTION
     # # Do nothing: wait for openloop to finish
     elif self.state == DriveState.IN_INTERSECTION:
-      return
+      #print("INTERSECTING")
+      pass
       
     else:
       raise Exception('Invalid State: {}'.format(self.state))
     
   def _on_openloop_finished(self, arg1, arg2, arg3):
+    print('{} GOT OPENLOOP CALLBACK, state={}'.format(time.time(), self.state))
     # Rolling is finished: command the next turn
     if self.state == DriveState.ROLLING_INTO_INTERSECTION:
       print('Received openloop callback while ROLLING_INTO_INTERSECTION')
       self.set_state(DriveState.IN_INTERSECTION)
-      
+      #print('SLEEPING')
+      #time.sleep(5.0)
       #########################################
-      self.next_turn = TurnType.LEFT
       #########################################
       
       if self.next_turn == TurnType.LEFT:
         self.car.command_openloop_lcurve(self.speed_limit, \
-            LEFT_TURN_RADIUS, PI / 2.0, self._on_openloop_finished)
+            LEFT_TURN_RADIUS, 1.2*PI / 2.0, self._on_openloop_finished)
       elif self.next_turn == TurnType.RIGHT:
         self.car.command_openloop_rcurve(self.speed_limit, \
-            RIGHT_TURN_RADIUS, PI / 2.0, self._on_openloop_finished)
+            RIGHT_TURN_RADIUS+5.0, PI / 4.0, self._on_openloop_finished)
       elif self.next_turn == TurnType.STRAIGHT:
         self.car.command_openloop_straight(self.speed_limit, \
             20.0, self._on_openloop_finished)

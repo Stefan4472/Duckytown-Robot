@@ -139,7 +139,7 @@ void OdometryInterface::update()
 
 void OdometryInterface::resetTo(float x, float y, float theta)
 {
-  Serial.println("Resetting odometry");
+  // Serial.println("Resetting odometry");
   noInterrupts(); // TODO: IS THIS NECESSARY?
   this->rightCount = 0;
   this->leftCount = 0;
@@ -150,8 +150,17 @@ void OdometryInterface::resetTo(float x, float y, float theta)
   this->theta = theta;
   this->distTravelled = 0.0;
 
+  prevLeftCount = 0;
+  prevRightCount = 0;
+  
   this->prevX = x;
   this->prevY = y;
   this->prevTheta = theta;
   this->prevDistTravelled = 0.0;
+
+  this->dX = 0.0;
+  this->dY = 0.0;
+  this->dTheta = 0.0;
+
+  lastUpdateMs = millis();
 }

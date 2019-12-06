@@ -72,7 +72,7 @@ class Navigator:
 
 
 	def get_next_instruction(self):
-		return TurnType.STRAIGHT
+		return TurnType.LEFT
 		'''
 		# time.sleep(1)
 		if self.finished_path():

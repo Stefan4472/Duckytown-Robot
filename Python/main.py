@@ -12,8 +12,8 @@ IMAGE_HEIGHT = 240
 segment_start_time = None
 num_driver_updates = 0
 
-def _receive_statistics(msPerLoop, msPerPacket, arg3):
-  print('Received statistics {} ms per loop, {} ms per packet'.format(msPerLoop, msPerPacket))
+def _receive_statistics(msPerLoop, msPerPacket, numPackets):
+  print('Received statistics {} ms per loop, {} ms per packet, {} packets'.format(msPerLoop, msPerPacket, int(numPackets)))
   
   
 if __name__ == '__main__':
@@ -25,8 +25,7 @@ if __name__ == '__main__':
 
   camera.start()
   time.sleep(2)
-  arduino_interface.set_speed_limit(20.0)
-  driver.set_speed_limit(15.0)  # TODO: DIFFERENTIATE BETWEEN SPEED LIMIT AND DESIRED SPEED
+  driver.set_speed_limit(20.0)  # TODO: DIFFERENTIATE BETWEEN SPEED LIMIT AND DESIRED SPEED
   pixel_data = np.empty(shape=(IMAGE_HEIGHT, IMAGE_WIDTH, 3), dtype='uint8')
   #arduino_interface.turn_statistics_on(10, _receive_statistics)
   

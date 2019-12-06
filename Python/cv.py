@@ -99,10 +99,10 @@ yellow_roi = RegionOfInterest(100, 7, 40, 40)
 yellow_backup_roi = RegionOfInterest(70, 0, 165, 100)
 white_roi = RegionOfInterest(100, 275, 40, 40)
 white_backup_roi = RegionOfInterest(70, 155, 165, 100)
-red_roi = RegionOfInterest(130, 150, 60, 40)
+red_roi = RegionOfInterest(130, 150, 40, 60)
 red_backup_roi = RegionOfInterest(130, 150, 45, 100)
 catastrophic_roi = RegionOfInterest(0, 0, CAMERA_RESOLUTION[0], CAMERA_RESOLUTION[1])
-green_roi = RegionOfInterest(100, 70, 160, 60)  # TODO
+green_roi = RegionOfInterest(100, 70, 100, 60)  # TODO
 
 # Possible colors
 class Color(Enum):

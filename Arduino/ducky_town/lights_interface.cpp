@@ -8,10 +8,10 @@ void LightsInterface::init(int leftPin, int rightPin)
   pinMode(leftPin, OUTPUT);
   pinMode(rightPin, OUTPUT);
 }
-
+  
 void LightsInterface::update(float currSpeed)
 {
-  bool activate_brake = (currSpeed == 0.0 || currSpeed < (lastSpeed * 0.8));
+  bool activate_brake = (currSpeed <= 2.0 || currSpeed < (lastSpeed * 0.8));
   if (activate_brake && !brakeOn)
   {
     startBrakeLight();
