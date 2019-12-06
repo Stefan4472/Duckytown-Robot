@@ -131,19 +131,17 @@ class Driver:
       # Green seen: start rolling into intersection
       if green:
         print('Found green')
-        self.debug_image(image)
+        #self.debug_image(image)
         #self.car.command_openloop_straight(self.speed_limit, \
         #    ROLL_DIST_CM, self._on_openloop_finished)     # TODO: THIS WILL GET CEILINGED BY THE OVERALL SPEEDLIMIT
         self.car.reset_odometry()
         self.next_turn = TurnType.LEFT
         rdc = 31 if self.next_turn == TurnType.LEFT else 24 # ROLL_DIST_CM, but better
-        #try:
-        #  if self.next_turn == TurnType.LEFT:
-        #    rdc = 31
-        #except:
-        #  print("turn not set")
-        #  pass
-        self.wd_timer = time.time() + 5
+        try:
+          self.next_turn
+        except:
+          return
+        self.wd_timer = time.time() + 4.5
         self.set_state(DriveState.ROLLING_INTO_INTERSECTION)
         self.car.command_openloop_straight(20.0, \
             rdc, self._on_openloop_finished) # CHANGED FROM ROLL_DIST_CM TO rdc
@@ -154,15 +152,18 @@ class Driver:
     # ROLLING_INTO_INTERSECTION
     # Do nothing: wait for openloop to finish
     elif self.state == DriveState.ROLLING_INTO_INTERSECTION:
-      if self.wd_timer+3 < time.time():
-        self.set_state(DriveState.FOLLOWING_LANE)
-      elif self.wd_timer < time.time():
-        self.car.command_openloop_straight(20.0, 24, self._on_openloop_finished)
+      if self.wd_timer < time.time():
+        print("\n! Watchdog timer exceeded. Proceed to Intersection state.\n")
+        self._on_openloop_finished(0,0,0)
+        self.wd_timer = time.time() + 4.5
       pass
       
     # IN_INTERSECTION
     # # Do nothing: wait for openloop to finish
     elif self.state == DriveState.IN_INTERSECTION:
+      if self.wd_timer < time.time():
+        print("\n! Watchdog timer exceeded. Proceed to lane following state.\n")
+        self._on_openloop_finished(0,0,0)
       #print("INTERSECTING")
       pass
       
@@ -177,8 +178,6 @@ class Driver:
       self.set_state(DriveState.IN_INTERSECTION)
       #print('SLEEPING')
       #time.sleep(5.0)
-      #########################################
-      #########################################
       
       if self.next_turn == TurnType.LEFT:
         self.car.command_openloop_lcurve(self.speed_limit, \
