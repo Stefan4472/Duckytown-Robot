@@ -125,7 +125,7 @@ void OdometryInterface::update()
   this->prevRightCount = ticks_right;
 
   this->prevDistTravelled = this->distTravelled;
-  this->distTravelled += ddist_travelled;
+  this->distTravelled += abs(ddist_travelled);
 
   // this->distLeft += ddist_left;
   // this->distRight += ddist_right;

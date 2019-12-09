@@ -76,12 +76,12 @@ class Camera:
       self.frames_captured += 1
       self.frame_ready = True
 
-      if self.frames_captured >= 100:
+      """if self.frames_captured >= 100:
         print('FPS over the last {} captures was {}'.format(\
             self.frames_captured, self.frames_captured / (time.time() - self.start_time)))
         self.frames_captured = 0
         self.start_time = time.time()
-
+      """
     # camera_on = False
     # camera_generator = None
 

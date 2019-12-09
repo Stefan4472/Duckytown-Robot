@@ -12,17 +12,17 @@ class DriveState(Enum):
   ROLLING_INTO_INTERSECTION = 2
   IN_INTERSECTION = 3
   FOLLOWING_LANE = 4
+  FINISHED = 5
   
 LEFT_TURN_RADIUS = 14.0
 RIGHT_TURN_RADIUS = 5.0
-
 ROLL_DIST_CM = 22.0 #5
 
 class Driver:
   def __init__(self, arduino_interface):
     self.car = arduino_interface
     self.speed_limit = 10.0
-    
+    self.last_stop = False
     # Diagnostics
     self.num_updates = 0
     self.start_time = None
@@ -55,7 +55,7 @@ class Driver:
     if self.start_time:
       print('Average control rate for {} was {}'.format( \
           self.state, self.num_updates / (time.time() - self.start_time)))
-
+    
     self.state = new_state
     self.start_time = time.time()
     self.num_updates = 0
@@ -78,10 +78,13 @@ class Driver:
     if self.state == DriveState.FOLLOWING_LANE:
       # Look for Stop using RegionOfInterest code
       red = cv.search_region(image, self.red_roi, cv.Color.RED)
-      
       # Stop line seen
       if red:
         print('Stop seen')
+        if self.last_stop:
+          print('Destination reached.')
+          self.set_state(DriveState.FINISHED)
+          return
         # Get stop center (along vertical axis).
         start_red, end_red = cv.get_color_extent_vt(image, red[0], red[1])
         red_center = start_red[0] + int((end_red[0] - start_red[0]) / 2.0), red[1]
@@ -95,22 +98,21 @@ class Driver:
       # Stop not seen: continue lane-following.
       # Find pixel coordinates of yellow and white features.
       yellow, white, _ = cv.analyze_img(image)
-
       # Get lane center
       lane_center = None
       if yellow and white:
-        print('Got yellow {}, white {}'.format(yellow, white))
+        #print('Got yellow {}, white {}'.format(yellow, white))
         lane_center = (yellow[0] + white[0]) / 2.0, (yellow[1] + white[1]) / 2.0
       elif white and not yellow:
-        print('Using white line')
+        #print('Using white line')
         lane_center = (white[0], white[1] - cv.white_width - 1*(cv.LANE_WIDTH_PX / 2.0))
       elif yellow and not white:
-        print('Using yellow line')
-        lane_center = (yellow[0], yellow[1] + cv.yellow_width + 10 + 1*(cv.LANE_WIDTH_PX / 2.0))
+        #print('Using yellow line')
+        lane_center = (yellow[0], yellow[1] + cv.yellow_width + 1*(cv.LANE_WIDTH_PX / 2.0))
       
       # No lane seen while following lane: use previous point.
       if lane_center is None:
-        print('Couldn\'t see the lane')  # TODO: TIMEOUT IF CAN'T SEE THE LANE FOR MORE THAN X SECONDS?
+        #print('Couldn\'t see the lane')  # TODO: TIMEOUT IF CAN'T SEE THE LANE FOR MORE THAN X SECONDS?
         try:
           lane_center = self.old_ctr
         except:
@@ -135,15 +137,15 @@ class Driver:
         #self.car.command_openloop_straight(self.speed_limit, \
         #    ROLL_DIST_CM, self._on_openloop_finished)     # TODO: THIS WILL GET CEILINGED BY THE OVERALL SPEEDLIMIT
         self.car.reset_odometry()
-        self.next_turn = TurnType.LEFT
+        #self.next_turn = TurnType.LEFT
         rdc = 31 if self.next_turn == TurnType.LEFT else 24 # ROLL_DIST_CM, but better
         try:
           self.next_turn
         except:
           return
-        self.wd_timer = time.time() + 4.5
+        self.wd_timer = time.time() + 3.5
         self.set_state(DriveState.ROLLING_INTO_INTERSECTION)
-        self.car.command_openloop_straight(20.0, \
+        self.car.command_openloop_straight(15.0, \
             rdc, self._on_openloop_finished) # CHANGED FROM ROLL_DIST_CM TO rdc
         
         print('Rolling command sent at {}'.format(time.time()))
@@ -155,7 +157,7 @@ class Driver:
       if self.wd_timer < time.time():
         print("\n! Watchdog timer exceeded. Proceed to Intersection state.\n")
         self._on_openloop_finished(0,0,0)
-        self.wd_timer = time.time() + 4.5
+        self.wd_timer = time.time() + 3.5
       pass
       
     # IN_INTERSECTION
@@ -167,6 +169,9 @@ class Driver:
       #print("INTERSECTING")
       pass
       
+    elif self.state == DriveState.FINISHED:
+      self.car.command_motor_pwms(0,0)
+      return
     else:
       raise Exception('Invalid State: {}'.format(self.state))
     
@@ -174,11 +179,10 @@ class Driver:
     print('{} GOT OPENLOOP CALLBACK, state={}'.format(time.time(), self.state))
     # Rolling is finished: command the next turn
     if self.state == DriveState.ROLLING_INTO_INTERSECTION:
-      print('Received openloop callback while ROLLING_INTO_INTERSECTION')
+      #print('Received openloop callback while ROLLING_INTO_INTERSECTION')
       self.set_state(DriveState.IN_INTERSECTION)
       #print('SLEEPING')
       #time.sleep(5.0)
-      
       if self.next_turn == TurnType.LEFT:
         self.car.command_openloop_lcurve(self.speed_limit, \
             LEFT_TURN_RADIUS, 1.2*PI / 2.0, self._on_openloop_finished)
@@ -194,4 +198,4 @@ class Driver:
     elif self.state == DriveState.IN_INTERSECTION:
       print('Received openloop callback while IN_INTERSECTION')
       self.set_state(DriveState.FOLLOWING_LANE)
-
+      self.needs_instruction = True

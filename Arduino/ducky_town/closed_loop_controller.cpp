@@ -1,7 +1,7 @@
 #include "closed_loop_controller.h"
 
 // Spring and Damper constants for the theta PD controller.
-#define K_ROT 3.85
+#define K_ROT 0.7 //3.85
 #define B_ROT 0
 
 void ClosedLoopController::init()
