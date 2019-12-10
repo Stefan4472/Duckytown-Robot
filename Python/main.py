@@ -22,9 +22,10 @@ if __name__ == '__main__':
   arduino_interface = ArduinoInterface('/dev/ttyACM0', 115200, timeout=1.0)
   camera = Camera()
   driver = Driver(arduino_interface)
-  ipaths = input("Enter start: ")
-  ipathm = input("Enter middle: ")
-  ipathe = input("Enter end: ")
+  #ipaths = int(input("Enter start: ").strip())
+  #ipathm = int(input("Enter middle: ").strip())
+  #ipathe = int(input("Enter end: ").strip())
+  ipaths, ipathm, ipathe = 10, 5, 3
   if ipaths == 7 or ipaths == 11:
     cur_speed = 15
   navigator = Navigator((int(ipaths), int(ipathm), int(ipathe)))
@@ -74,7 +75,10 @@ if __name__ == '__main__':
         # end_time = time.time()
         # print('Update loop took {} seconds'.format(end_time - start_time))
         # num_driver_updates += 1
+      else:  # Relinquish control of the thread, allowing camera to run
+        time.sleep(0.05)
         
   finally:
     print('Turning off motors')
     arduino_interface.command_motor_pwms(0, 0)
+    # TODO: TURN OFF CAMERA AND RELEASE RESOURCES camera.stop()

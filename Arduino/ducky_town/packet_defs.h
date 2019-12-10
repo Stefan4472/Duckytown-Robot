@@ -7,11 +7,11 @@ struct PiToArduinoPacket
   float arg1;
   float arg2;
   float arg3;
-  uint8_t seqNum;
+  uint32_t seqNum;
 };
 
-const uint8_t PI_TO_ARDUINO_PACKET_LENGTH = 14;
-const uint8_t ARDUINO_TO_PI_PACKET_LENGTH = 14;
+const uint8_t PI_TO_ARDUINO_PACKET_LENGTH = 17;
+const uint8_t ARDUINO_TO_PI_PACKET_LENGTH = 17;
 
 enum class PiToArduinoCmd
 {
@@ -47,7 +47,7 @@ struct ArduinoToPiPacket
   float arg1;
   float arg2;
   float arg3;
-  uint8_t seqNum;
+  uint32_t seqNum;
 };
 
 #endif

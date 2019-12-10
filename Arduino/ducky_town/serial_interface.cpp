@@ -84,7 +84,8 @@ bool SerialUtil::readPacket(PiToArduinoPacket* packet)
   packet->arg1 = readInt32() / 1000.0;
   packet->arg2 = readInt32() / 1000.0;
   packet->arg3 = readInt32() / 1000.0;
-  packet->seqNum = Serial.read();
+  packet->seqNum = readUint32();
+  
   return true;
 }
 
@@ -94,12 +95,13 @@ bool SerialUtil::writePacket(ArduinoToPiPacket* packet)
   writeInt32((int32_t) (packet->arg1 * 1000.0));
   writeInt32((int32_t) (packet->arg2 * 1000.0));
   writeInt32((int32_t) (packet->arg3 * 1000.0));
-  Serial.write(packet->seqNum);
+  writeUint32(packet->seqNum);
   return true;
 }
 
 void SerialUtil::printPacket(PiToArduinoPacket* packet)
 {
+//  Serial.println("PiToArduinoPacket: ", + String(packet->commandID) + ", " + String(packet-
   Serial.print("PiToArduinoPacket: ");
   Serial.print(packet->commandID);
   Serial.print(", ");

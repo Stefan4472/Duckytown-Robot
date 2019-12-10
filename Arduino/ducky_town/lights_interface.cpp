@@ -11,7 +11,8 @@ void LightsInterface::init(int leftPin, int rightPin)
   
 void LightsInterface::update(float currSpeed)
 {
-  bool activate_brake = (currSpeed <= 2.0 || currSpeed < (lastSpeed * 0.8));
+  bool activate_brake = (currSpeed <= 2.0); // || currSpeed < (lastSpeed * 0.8));
+//  Serial.println("Lights: currSpeed " + String(currSpeed) + ", lastSpeed " + String(lastSpeed));
   if (activate_brake && !brakeOn)
   {
     startBrakeLight();

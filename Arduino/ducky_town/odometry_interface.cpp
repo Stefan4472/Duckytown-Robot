@@ -91,26 +91,25 @@ void OdometryInterface::update()
 
   // Calculate distance travelled along current heading
   ddist_travelled = (ddist_left + ddist_right) / 2.0;
-
   // Calculate heading change
   dtheta = atan2((ddist_right - ddist_left) / 2.0, WHEEL_BASE_CM / 2.0);
 
   // Calculate new position
-  this->theta = this->prevTheta + dtheta;
-  this->x = this->prevX + ddist_travelled * cos(this->theta);
-  this->y = this->prevY + ddist_travelled * sin(this->theta);
+  theta = prevTheta + dtheta;
+  x = prevX + ddist_travelled * cos(theta);
+  y = prevY + ddist_travelled * sin(theta);
 
   unsigned long curr_time_ms = millis();
 
   // Update velocity estimates every 500 ms
-  if (curr_time_ms - lastVelUpdateMs >= 500)
+  if (curr_time_ms - lastVelUpdateMs >= 500)  // TODO: THIS CAN BE LOWER
   {
 //    Serial.println("Curr time " + String(curr_time_ms) + " last update " + String(lastVelUpdateMs));
     //Serial.println("x, prev x " + String(x) + ", " + String(prevX));
 //    Serial.println("Seconds since last update " + String((curr_time_ms - lastVelUpdateMs) / 1000.0));
-    this->dX = (this->x - this->xLastVelUpdate) / ((curr_time_ms - lastVelUpdateMs) / 1000.0);
-    this->dY = (this->y - this->yLastVelUpdate) / ((curr_time_ms - lastVelUpdateMs) / 1000.0);
-    this->dTheta = (this->theta - this->tLastVelUpdate) / ((curr_time_ms - lastVelUpdateMs) / 1000.0);
+    dX = (x - xLastVelUpdate) / ((curr_time_ms - lastVelUpdateMs) / 1000.0);
+    dY = (y - yLastVelUpdate) / ((curr_time_ms - lastVelUpdateMs) / 1000.0);
+    dTheta = (theta - tLastVelUpdate) / ((curr_time_ms - lastVelUpdateMs) / 1000.0);
 //    Serial.println("dx " + String(dX) + " dy " + String(dY) + " dt " + String(dTheta));
 
     xLastVelUpdate = x;
@@ -119,21 +118,19 @@ void OdometryInterface::update()
     lastVelUpdateMs = curr_time_ms;
   }
   
-  
+  prevLeftCount = ticks_left;
+  prevRightCount = ticks_right;
 
-  this->prevLeftCount = ticks_left;
-  this->prevRightCount = ticks_right;
-
-  this->prevDistTravelled = this->distTravelled;
-  this->distTravelled += abs(ddist_travelled);
-
-  // this->distLeft += ddist_left;
-  // this->distRight += ddist_right;
+  prevDistTravelled = distTravelled;
+  distTravelled += abs(ddist_travelled);
+//  Serial.println("Distance travelled since last update " + String(ddist_travelled));
+  // distLeft += ddist_left;
+  // distRight += ddist_right;
 
   // Set values.
-  this->prevX = this->x;
-  this->prevY = this->y;
-  this->prevTheta = this->theta;
+  prevX = x;
+  prevY = y;
+  prevTheta = theta;
   lastUpdateMs = curr_time_ms;
 }
 

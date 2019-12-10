@@ -2,20 +2,22 @@
 
 void OpenLoopController::init()
 {
-  updatePeriodMs = 100;
-  lastUpdateMs = 0;
+  updatePeriodMs = 0;  // THIS NEEDS TO BE ZERO SO THAT OPENLOOP RUNS ON EACH UPDATE AND CAN USE ODOMETRY DIST/PREVDIST VALUES.
+  lastUpdateMs = 0;  
 }
 
 void OpenLoopController::update(OdometryInterface* odometry, WheelInterface* wheels, LightsInterface* lights)
 {
-  if (finished)
+  unsigned long curr_time = millis();
+  if (finished || curr_time - lastUpdateMs <= updatePeriodMs)
   {
     return;
   }
    
-  //  Serial.println("OpenLoop running update()");
+//  Serial.println("OpenLoop running update at time " + String(millis()));
 //  Serial.println("currDist = " + String(odometry->distTravelled));
 //  Serial.println("prevDist = " + String(odometry->prevDistTravelled));
+
   // Update tracked distance travelled.
   distanceTravelled += odometry->distTravelled - odometry->prevDistTravelled;
 //  Serial.println("distanceTravelled now " + String(distanceTravelled));
@@ -32,11 +34,12 @@ void OpenLoopController::update(OdometryInterface* odometry, WheelInterface* whe
     {
       lights->stopRightBlinker();
     }
-  
-//      Serial.println("Finished, reached target " + String(targetDistance));
+ 
     wheels->commandPWMs(0, 0);
     finished = true;
   }
+
+  lastUpdateMs = curr_time;
 }
 
 void OpenLoopController::commandStraight(float cmPerSec, float targetDistCm, WheelInterface* wheels)
@@ -60,7 +63,7 @@ void OpenLoopController::commandRightTurn(float cmPerSec, float turnRadius, floa
   // Calculate desired straight-line distance (0.0 = no target).
   distanceTravelled = 0.0;
   targetDistance = targetRad * WHEEL_CIRCUMFERENCE_CM;
-  
+//  Serial.println("TargetDistance " + String(targetDistance) + ", speed = " + String(left_speed) + ", " + String(right_speed));
   lights->startRightBlinker();
   wheels->commandSpeeds(left_speed, right_speed);
   
@@ -78,6 +81,7 @@ void OpenLoopController::commandLeftTurn(float cmPerSec, float turnRadius, float
   // Calculate desired straight-line distance (0.0 = no target).
   distanceTravelled = 0.0;
   targetDistance = targetRad * WHEEL_CIRCUMFERENCE_CM;
+//  Serial.println("TargetDistance " + String(targetDistance) + ", speed = " + String(left_speed) + ", " + String(right_speed));
   
   lights->startLeftBlinker();
   wheels->commandSpeeds(left_speed, right_speed);

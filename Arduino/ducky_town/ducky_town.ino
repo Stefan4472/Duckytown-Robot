@@ -24,10 +24,10 @@ LightsInterface lightsInterface;
 // Timestamp of the last loop() run.
 unsigned long lastLoop;
 // Sequence number of the last open/closed loop control packet received.
-int lastControlSeqnum;
+uint32_t lastControlSeqnum;
 
 bool sendStatistics;
-int statisticsSeqnum;
+uint32_t statisticsSeqnum;
 int statisticsPeriodMs;
 unsigned long lastStatisticsPacket = 0;
 
@@ -61,8 +61,9 @@ void loop()
   // Process any queued packets.
   while (serialInterface.getNextPacket(&recv_packet))
   {
+//    SerialUtil::printPacket(&recv_packet);
     unsigned long process_start = millis();
-     //Serial.println("Got packet at " + String(millis()));
+//     Serial.println("Got packet at " + String(millis()) + " seqnum " + String(recv_packet.seqNum));
     // Handle the request and send a response if requested.
     if (handleRequest(&recv_packet, &send_packet))
     {
@@ -136,11 +137,13 @@ void loop()
 // packet and returns whether it should be sent.
 bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
 {
+//  Serial.println("Got request with commandID " + String(request->commandID));
   // Handle the possible commandIDs.
   switch (static_cast<int>(request->commandID))
   {
     // ECHO command
     case static_cast<int>(PiToArduinoCmd::ECHO):
+//      Serial.println("Got echo request w/seqnum " + String(request->seqNum) + ", args " + String(request->arg1) + ", " + String(request->arg2) + ", " + String(request->arg3));
       response->commandID = static_cast<int>(ArduinoToPiRsp::ECHO);
       response->arg1 = request->arg1;
       response->arg2 = request->arg2;
@@ -191,6 +194,7 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
 
     // SET_OPENLOOP_R_CURVE command
     case static_cast<int>(PiToArduinoCmd::SET_OPENLOOP_R_CURVE):
+//      Serial.println("Received openloop command at time " + String(millis()));
       lastControlSeqnum = request->seqNum;
       closedLoopController.cancel(&lightsInterface);
       openLoopController.cancel(&lightsInterface);
@@ -200,6 +204,7 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
 
     // SET_OPENLOOP_L_CURVE command
     case static_cast<int>(PiToArduinoCmd::SET_OPENLOOP_L_CURVE):
+//      Serial.println("Received openloop command at time " + String(millis()));
       lastControlSeqnum = request->seqNum;
       closedLoopController.cancel(&lightsInterface);
       openLoopController.cancel(&lightsInterface);
@@ -219,7 +224,7 @@ bool handleRequest(PiToArduinoPacket* request, ArduinoToPiPacket* response)
 
     // RESET_ODOMETRY command
     case static_cast<int>(PiToArduinoCmd::RESET_ODOMETRY):
-//      Serial.println("Resetting odometry");
+//      Serial.println("Resetting odometry at time " + String(millis()));
       odometryInterface.resetTo(0.0, 0.0, 0.0);
       return false;
       

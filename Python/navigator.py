@@ -72,8 +72,8 @@ class Navigator:
 
 
 	def get_next_instruction(self):
-		#return TurnType.LEFT
-		
+		return TurnType.STRAIGHT, 10.0
+		'''
 		# time.sleep(1)
 		if self.finished_path():
 			# print("finished_path")
@@ -92,4 +92,5 @@ class Navigator:
 
 		edge_Data = self.graph.get_edge_data(start, end)
 		return (edge_Data["Turn"], edge_Data["Speed"])
+		'''
 		

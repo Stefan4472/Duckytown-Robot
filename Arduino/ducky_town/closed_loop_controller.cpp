@@ -12,12 +12,14 @@ void ClosedLoopController::init()
 
 void ClosedLoopController::update(OdometryInterface* odometry, WheelInterface* wheels, LightsInterface* lights)
 {
-  if (!finished && millis() - lastUpdateMs >= updatePeriodMs)
+  unsigned long curr_time = millis();
+  if (!finished && curr_time - lastUpdateMs >= updatePeriodMs)
   {
     float theta_dot_error = odometry->dTheta;
 
     float theta_ddot = -K_ROT * thetaErr - B_ROT * theta_dot_error;
     wheels->commandSpeeds(desiredSpeed - theta_ddot, desiredSpeed + theta_ddot);
+    lastUpdateMs = curr_time;
   }
 }
 

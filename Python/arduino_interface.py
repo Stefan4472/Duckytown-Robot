@@ -1,7 +1,7 @@
 from serial import Serial
 from packets import ArduinoToPiPacket, PiToArduinoPacket, PiToArduinoCmd, ArduinoToPiRsp
 
-class ArduinoInterface:
+class ArduinoInterface:  # NOTE: CALLBACKS WILL FAIL AFTER 2^32 PACKETS ARE SENT
   def __init__(self, port, baudrate, timeout=3.0):  # NOTE: REQUIRES TWO SECONDS TO START
     self.serial_port = Serial(port, baudrate, timeout=timeout)
     self.serial_port.flushInput()
@@ -17,13 +17,13 @@ class ArduinoInterface:
       while self.serial_port.in_waiting:
         print(self.serial_port.readline())
     else:
-      while self.serial_port.in_waiting >= 14:
-        bytes_read = self.serial_port.read(14)
-        #print('Got bytes {}'.format(bytes_read))
+      while self.serial_port.in_waiting >= PiToArduinoPacket.PACKET_SIZE:
+        bytes_read = self.serial_port.read(PiToArduinoPacket.PACKET_SIZE)
+        #print('Got {} bytes {}'.format(len(bytes_read), bytes_read))
         read_packet = ArduinoToPiPacket(bytes_read)
         # Look up whether there is a registered callback function
         if read_packet.seq_num in self.callbacks:
-          print('Found a callback')
+          #print('Found a callback seqnum={}'.format(read_packet.seq_num))
           self.callbacks[read_packet.seq_num] \
               (read_packet.arg1, read_packet.arg2, read_packet.arg3)
 
@@ -38,8 +38,9 @@ class ArduinoInterface:
     # Register the callback, if any
     if callback_fcn:
       self.callbacks[seq_num] = callback_fcn
+      #print('Registering callback with seq_num {}'.format(seq_num))
     # Send the packet
-    self.serial_port.write(bytes(send_packet.to_byte_string()))
+    bytes_written = self.serial_port.write(bytes(send_packet.to_byte_string()))
 
   def echo(self, arg1, arg2, arg3, callback=None):
     self.send_packet(PiToArduinoCmd.ECHO, arg1, arg2, arg3, callback)

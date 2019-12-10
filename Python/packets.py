@@ -17,6 +17,7 @@ class PiToArduinoCmd(Enum):
 
 # TODO: PREAMBLES?
 class PiToArduinoPacket:
+  PACKET_SIZE = 17
   # Creates a Pi->Arduino packet.
   # command: value of type PiToArduinoCmd
   # seq_num: sequence number
@@ -35,7 +36,7 @@ class PiToArduinoPacket:
     args.append(int(1000 * self.arg1).to_bytes(4, 'big', signed=True))
     args.append(int(1000 * self.arg2).to_bytes(4, 'big', signed=True))
     args.append(int(1000 * self.arg3).to_bytes(4, 'big', signed=True))
-    args.append(int(self.seq_num % 256).to_bytes(1, 'big'))
+    args.append(int(self.seq_num).to_bytes(4, 'big'))
     return b''.join(args)
 
 class ArduinoToPiRsp(Enum):
@@ -47,14 +48,15 @@ class ArduinoToPiRsp(Enum):
   STATISTICS = 8
 
 class ArduinoToPiPacket:
+  PACKET_SIZE = 17
   # Parses Arduino->Pi packet from the given byte array.
-  # The byte array should be 14 bytes long.
+  # The byte array should be 17 bytes long.
   def __init__(self, byte_array):
     self.command = ArduinoToPiRsp(byte_array[0])
     self.arg1 = parse_float16(byte_array[1:5])
     self.arg2 = parse_float16(byte_array[5:9])
     self.arg3 = parse_float16(byte_array[9:13])
-    self.seq_num = byte_array[13]
+    self.seq_num = parse_uint16(byte_array[13:17])
 
   def __str__(self):
     return '{}: {} {} {} {}'.format(self.command, self.arg1, \

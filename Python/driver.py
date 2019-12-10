@@ -62,6 +62,7 @@ class Driver:
 
   # Debugging
   def debug_image(self, image):
+    print('Debugging image')
     cv.draw_region(image, self.red_roi, (255, 255, 255))
     cv.draw_region(image, self.green_roi, (255, 255, 0))
     Image.fromarray(image, 'RGB').show()
@@ -81,6 +82,7 @@ class Driver:
       # Stop line seen
       if red:
         print('Stop seen')
+        
         if self.last_stop:
           print('Destination reached.')
           self.set_state(DriveState.FINISHED)
@@ -88,8 +90,10 @@ class Driver:
         # Get stop center (along vertical axis).
         start_red, end_red = cv.get_color_extent_vt(image, red[0], red[1])
         red_center = start_red[0] + int((end_red[0] - start_red[0]) / 2.0), red[1]
+        cv.draw_square(image, red_center[0], red_center[1], (255, 255, 255), 5)
         # Center green ROI on the center of the red line.
         self.green_roi.recenter(*red_center)
+        self.debug_image(image)
         # Stop the car
         self.car.command_motor_pwms(0, 0)
         self.set_state(DriveState.STOPPED)
@@ -133,7 +137,7 @@ class Driver:
       # Green seen: start rolling into intersection
       if green:
         print('Found green')
-        #self.debug_image(image)
+        self.debug_image(image)
         #self.car.command_openloop_straight(self.speed_limit, \
         #    ROLL_DIST_CM, self._on_openloop_finished)     # TODO: THIS WILL GET CEILINGED BY THE OVERALL SPEEDLIMIT
         self.car.reset_odometry()
@@ -143,7 +147,7 @@ class Driver:
           self.next_turn
         except:
           return
-        self.wd_timer = time.time() + 3.5
+        self.wd_timer = time.time() + 20.0 #3.5
         self.set_state(DriveState.ROLLING_INTO_INTERSECTION)
         self.car.command_openloop_straight(15.0, \
             rdc, self._on_openloop_finished) # CHANGED FROM ROLL_DIST_CM TO rdc
@@ -184,12 +188,15 @@ class Driver:
       #print('SLEEPING')
       #time.sleep(5.0)
       if self.next_turn == TurnType.LEFT:
+        print('Sending openloop left turn command')
         self.car.command_openloop_lcurve(self.speed_limit, \
             LEFT_TURN_RADIUS, 1.2*PI / 2.0, self._on_openloop_finished)
       elif self.next_turn == TurnType.RIGHT:
+        print('Sending openloop left turn command')
         self.car.command_openloop_rcurve(self.speed_limit, \
             RIGHT_TURN_RADIUS+5.0, PI / 4.0, self._on_openloop_finished)
       elif self.next_turn == TurnType.STRAIGHT:
+        print('Sending openloop left turn command')
         self.car.command_openloop_straight(self.speed_limit, \
             20.0, self._on_openloop_finished)
       else:
